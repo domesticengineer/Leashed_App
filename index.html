@@ -65,4 +65,385 @@
     input, select {
       width: 100%;
       padding: 10px;
-      margin
+      margin: 8px 0;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    .error {
+      color: #ef4444;
+      font-size: 14px;
+    }
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="login" class="container">
+    <div class="card">
+      <h1>Leashed Pet Care Login</h1>
+      <div id="login-error" class="error hidden"></div>
+      <div>
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="Enter username" required>
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter password" required>
+      </div>
+      <button class="btn btn-blue" onclick="handleLogin()">Login</button>
+    </div>
+  </div>
+  <div id="admin" class="container hidden">
+    <div class="flex-between">
+      <h1>Admin Dashboard</h1>
+      <button class="btn btn-red" onclick="handleLogout()">Logout</button>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h2>Create New User</h2>
+        <div>
+          <label for="new-firstname">First Name</label>
+          <input id="new-firstname" type="text" placeholder="First Name" required>
+        </div>
+        <div>
+          <label for="new-lastname">Last Name</label>
+          <input id="new-lastname" type="text" placeholder="Last Name" required>
+        </div>
+        <div>
+          <label for="new-username">Username</label>
+          <input id="new-username" type="text" placeholder="Username" required>
+        </div>
+        <div>
+          <label for="new-password">Password</label>
+          <input id="new-password" type="password" placeholder="Password" required>
+        </div>
+        <div>
+          <label for="new-role">Role</label>
+          <select id="new-role">
+            <option value="walker">Walker</option>
+            <option value="client">Client</option>
+          </select>
+        </div>
+        <button class="btn btn-blue" onclick="createUser()">Create User</button>
+      </div>
+      <div class="create-schedule card">
+        <h2>Create Schedule</h2>
+        <div>
+          <label for="schedule-client">Client</label>
+          <select id="schedule-client" required>
+            <option value="">Select Client</option>
+          </select>
+        </div>
+        <div>
+          <label for="schedule-walker">Walker</label>
+          <select id="schedule-walker" required>
+            <option value="">Select Walker</option>
+          </select>
+        </div>
+        <div>
+          <label for="pet">Pet Name</label>
+          <input id="pet" type="text" placeholder="Pet Name" required>
+        </div>
+        <div>
+          <label for="schedule-date">Date</label>
+          <input id="schedule-date" type="date" required>
+        </div>
+        <div>
+          <label for="schedule-time">Time</label>
+          <input id="schedule-time" type="time" required>
+        </div>
+        <button class="btn btn-blue" onclick="createSchedule()">Create Schedule</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Reports</h2>
+      <ul id="admin-reports"></ul>
+    </div>
+  </div>
+  <div id="walker" class="container hidden">
+    <div class="flex-between">
+      <h1>Walker Dashboard</h1>
+      <button class="btn btn-red" onclick="handleLogout()">Logout</button>
+    </div>
+    <div class="card">
+      <h2>Your Schedules</h2>
+      <ul id="walker-schedules"></ul>
+    </div>
+    <div class="card">
+      <h2>Your Reports</h2>
+      <ul id="walker-reports"></ul>
+    </div>
+  </div>
+  <div id="client" class="container hidden">
+    <div class="flex-between">
+      <h1>Client Dashboard</h1>
+      <button class="btn btn-red" onclick="handleLogout()">Logout</button>
+    </div>
+    <div class="card">
+      <h2>Your Schedules</h2>
+      <ul id="client-schedules"></ul>
+    </div>
+    <div class="card">
+      <h2>Reports</h2>
+      <ul id="client-reports"></ul>
+    </div>
+    <div class="card">
+      <button class="btn btn-blue" onclick="alert('Payment functionality not implemented')">Pay Now</button>
+    </div>
+  </div>
+  <script>
+    // Initialize data
+    function initializeData() {
+      const defaultData = {
+        users: [
+          { id: 'admin1', firstName: 'Admin', lastName: 'User', username: 'admin', password: btoa('admin123'), role: 'admin' },
+          { id: 'walker1', firstName: 'John', lastName: 'Doe', username: 'walker1', password: btoa('walker123'), role: 'walker' },
+          { id: 'client1', firstName: 'Jane', lastName: 'Smith', username: 'client1', password: btoa('client123'), role: 'client' },
+        ],
+        schedules: [
+          { id: 'sch1', clientId: 'client1', walkerId: 'walker1', pet: 'Buddy', date: '2025-07-25', time: '10:00', status: 'pending' },
+        ],
+        checkIns: [],
+        reports: [],
+      };
+      if (!localStorage.getItem('leashedData')) {
+        localStorage.setItem('leashedData', JSON.stringify(defaultData));
+      }
+    }
+
+    // Data access
+    function getData() {
+      return JSON.parse(localStorage.getItem('leashedData') || '{}');
+    }
+
+    function saveData(data) {
+      localStorage.setItem('leashedData', JSON.stringify(data));
+    }
+
+    // Current user
+    let currentUser = null;
+
+    // Show/hide sections
+    function showSection(sectionId) {
+      ['login', 'admin', 'walker', 'client'].forEach(id => {
+        document.getElementById(id).classList.toggle('hidden', id !== sectionId);
+      });
+    }
+
+    // Login
+    function handleLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const data = getData();
+      const user = data.users.find(
+        u => u.username.toLowerCase() === username.toLowerCase() && u.password === btoa(password)
+      );
+      if (user) {
+        currentUser = user;
+        document.getElementById('login-error').classList.add('hidden');
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        if (user.role === 'admin') {
+          showSection('admin');
+          renderAdmin();
+        } else if (user.role === 'walker') {
+          showSection('walker');
+          renderWalker();
+        } else {
+          showSection('client');
+          renderClient();
+        }
+      } else {
+        document.getElementById('login-error').textContent = 'Invalid username or password';
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    // Logout
+    function handleLogout() {
+      currentUser = null;
+      showSection('login');
+    }
+
+    // Create user
+    function createUser() {
+      const firstName = document.getElementById('new-firstname').value;
+      const lastName = document.getElementById('new-lastname').value;
+      const username = document.getElementById('new-username').value;
+      const password = document.getElementById('new-password').value;
+      const role = document.getElementById('new-role').value;
+
+      const data = getData();
+
+      if (data.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+        alert('Username already exists');
+        return;
+      }
+
+      data.users.push({
+        id: `user${data.users.length + 1}`,
+        firstName,
+        lastName,
+        username,
+        password: btoa(password),
+        role
+      });
+
+      saveData(data);
+      document.getElementById('new-firstname').value = '';
+      document.getElementById('new-lastname').value = '';
+      document.getElementById('new-username').value = '';
+      document.getElementById('new-password').value = '';
+      alert('User created successfully');
+      renderAdmin();
+    }
+
+    // Create schedule
+    function createSchedule() {
+      const clientId = document.getElementById('schedule-client').value;
+      const walkerId = document.getElementById('schedule-walker').value;
+      const pet = document.getElementById('pet').value;
+      const date = document.getElementById('schedule-date').value;
+      const time = document.getElementById('schedule-time').value;
+      const data = getData();
+      data.schedules.push({
+        id: `sch${data.schedules.length + 1}`,
+        clientId,
+        walkerId,
+        pet,
+        date,
+        time,
+        status: 'pending'
+      });
+      saveData(data);
+      document.getElementById('schedule-client').value = '';
+      document.getElementById('schedule-walker').value = '';
+      document.getElementById('pet').value = '';
+      document.getElementById('schedule-date').value = '';
+      document.getElementById('schedule-time').value = '';
+      alert('Schedule created successfully');
+      renderAdmin();
+    }
+
+    // Check-in/out
+    function handleCheckInOut(scheduleId, action, gps) {
+      const data = getData();
+      const timestamp = new Date().toISOString();
+      data.checkIns.push({
+        id: `check${data.checkIns.length + 1}`,
+        scheduleId,
+        action,
+        gps,
+        timestamp
+      });
+      const schedule = data.schedules.find(s => s.id === scheduleId);
+      schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
+      data.reports.push({
+        id: `rep${data.reports.length + 1}`,
+        scheduleId,
+        text: `Walker ${currentUser.username} ${action} for ${schedule.pet}`,
+        timestamp
+      });
+      saveData(data);
+      alert(`${action} recorded`);
+      renderWalker();
+    }
+
+    // Render admin dashboard
+    function renderAdmin() {
+      const data = getData();
+      // Update client and walker dropdowns
+      const clientSelect = document.getElementById('schedule-client');
+      const walkerSelect = document.getElementById('schedule-walker');
+      clientSelect.innerHTML = '<option value="">Select Client</option>';
+      walkerSelect.innerHTML = '<option value="">Select Walker</option>';
+      data.users.filter(u => u.role === 'client').forEach(u => {
+        clientSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
+      });
+      data.users.filter(u => u.role === 'walker').forEach(u => {
+        walkerSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
+      });
+      // Update reports
+      const reportsList = document.getElementById('admin-reports');
+      reportsList.innerHTML = '';
+      data.reports.forEach(r => {
+        reportsList.innerHTML += `<li>${r.text} (Time: ${r.timestamp})</li>`;
+      });
+    }
+
+    // Render walker dashboard
+    function renderWalker() {
+      const data = getData();
+      const schedulesList = document.getElementById('walker-schedules');
+      const reportsList = document.getElementById('walker-reports');
+      schedulesList.innerHTML = '';
+      reportsList.innerHTML = '';
+      const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
+      schedules.forEach(s => {
+        let buttons = '';
+        if (s.status !== 'completed') {
+          buttons = `
+            <input type="text" id="gps-${s.id}" placeholder="Enter mock GPS (e.g., 37.7749,-122.4194)">
+            <button class="btn btn-green" onclick="handleCheckInOut('${s.id}', 'check-in', document.getElementById('gps-${s.id}').value)" ${s.status === 'in-progress' ? 'disabled' : ''}>Check-In</button>
+            <button class="btn btn-yellow" onclick="handleCheckInOut('${s.id}', 'check-out', document.getElementById('gps-${s.id}').value)" ${s.status !== 'in-progress' ? 'disabled' : ''}>Check-Out</button>
+          `;
+        }
+        schedulesList.innerHTML += `
+          <li class="flex-between">
+            <span>Pet: ${s.pet}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
+            <div>${buttons}</div>
+          </li>
+        `;
+      });
+      data.reports.filter(r => schedules.some(s => s.id === r.scheduleId)).forEach(r => {
+        reportsList.innerHTML += `<li>${r.text} (Time: ${r.timestamp})</li>`;
+      });
+    }
+
+    // Render client dashboard
+    function renderClient() {
+      const data = getData();
+      const schedulesList = document.getElementById('client-schedules');
+      const reportsList = document.getElementById('client-reports');
+      schedulesList.innerHTML = '';
+      reportsList.innerHTML = '';
+      const schedules = data.schedules.filter(s => s.clientId === currentUser.id);
+      schedules.forEach(s => {
+        schedulesList.innerHTML += `<li>Pet: ${s.pet}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</li>`;
+      });
+      data.reports.filter(r => schedules.some(s => s.id === r.scheduleId)).forEach(r => {
+        reportsList.innerHTML += `<li>${r.text} (Time: ${r.timestamp})</li>`;
+      });
+    }
+
+    // Initialize
+    initializeData();
+    showSection('login');
+  </script>
+</body>
+</html>

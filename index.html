@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leashed Pet Care</title>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <!-- Temporarily commented out FullCalendar to isolate login issues -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script> -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -37,10 +38,10 @@
     .btn-blue:hover { background: #2563eb; }
     .btn-red { background: #ef4444; color: white; }
     .btn-red:hover { background: #dc2626; }
-    .btn-green { background: #10b981; color: white; }
-    .btn-green:hover { background: #059669; }
     .btn-yellow { background: #f59e0b; color: white; }
     .btn-yellow:hover { background: #d97706; }
+    .btn-green { background: #10b981; color: white; }
+    .btn-green:hover { background: #059669; }
     input, select, textarea {
       width: 100%;
       padding: 10px;
@@ -442,6 +443,7 @@
 
     function initializeData() {
       try {
+        console.log('Initializing data...');
         const defaultData = {
           users: [
             {
@@ -483,7 +485,9 @@
         };
         if (!localStorage.getItem('leashedData')) {
           localStorage.setItem('leashedData', JSON.stringify(defaultData));
-          console.log('Initialized default data');
+          console.log('Default data initialized successfully');
+        } else {
+          console.log('leashedData already exists');
         }
         if (!localStorage.getItem('calendarEvents')) {
           localStorage.setItem('calendarEvents', JSON.stringify([]));
@@ -491,15 +495,22 @@
         }
       } catch (err) {
         console.error('Error initializing data:', err);
-        alert('Failed to initialize app data. Please clear browser storage and try again.');
+        alert('Failed to initialize app data. Please clear browser storage and reload.');
       }
     }
 
     function getData() {
       try {
-        return JSON.parse(localStorage.getItem('leashedData') || '{}');
+        const data = localStorage.getItem('leashedData');
+        if (!data) {
+          console.warn('No leashedData found, reinitializing');
+          initializeData();
+          return JSON.parse(localStorage.getItem('leashedData') || '{}');
+        }
+        return JSON.parse(data);
       } catch (err) {
         console.error('Error parsing leashedData:', err);
+        alert('Error loading user data. Please clear browser storage and reload.');
         return { users: [], schedules: [], checkIns: [], reports: [] };
       }
     }
@@ -507,14 +518,19 @@
     function saveData(data) {
       try {
         localStorage.setItem('leashedData', JSON.stringify(data));
+        console.log('Data saved successfully');
       } catch (err) {
         console.error('Error saving data:', err);
-        alert('Failed to save data. Check browser storage.');
+        alert('Failed to save data. Check browser storage settings.');
       }
     }
 
     function loadCalendarData() {
       try {
+        // Skip calendar loading for now to isolate login issues
+        console.log('Skipping calendar data load for login troubleshooting');
+        // Uncomment below when login is fixed
+        /*
         fetch(CALENDAR_DATA_URL)
           .then(response => response.json())
           .then(data => {
@@ -528,6 +544,7 @@
             calendarData.events = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
             renderCalendars();
           });
+        */
       } catch (err) {
         console.error('Error loading calendar data:', err);
       }
@@ -544,6 +561,7 @@
         }
         localStorage.setItem('calendarEvents', JSON.stringify(localEvents));
         console.log(`Saved event: ${event.status} ${event.id} for ${event.start}`);
+        // Placeholder webhook
         fetch('YOUR_ZAPIER_WEBHOOK_URL', {
           method: 'POST',
           body: JSON.stringify(event)
@@ -554,59 +572,93 @@
     }
 
     function generateResetCode() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 8; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      try {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        console.log('Generated reset code:', code);
+        return code;
+      } catch (err) {
+        console.error('Error generating reset code:', err);
+        return null;
       }
-      return code;
     }
 
     function requestPasswordReset() {
-      const username = currentUser ? currentUser.username : document.getElementById('username').value;
-      if (!username) {
-        alert('Please enter a username');
-        return;
+      try {
+        console.log('Requesting password reset...');
+        const username = currentUser ? currentUser.username : document.getElementById('username').value || document.getElementById('reset-username').value;
+        if (!username) {
+          alert('Please enter a username');
+          console.warn('Password reset failed: No username provided');
+          return;
+        }
+        const data = getData();
+        const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+        if (!user) {
+          alert('User not found');
+          console.warn('Password reset failed: User not found for', username);
+          return;
+        }
+        const code = generateResetCode();
+        if (!code) {
+          alert('Failed to generate reset code. Try again.');
+          console.error('Reset code generation failed');
+          return;
+        }
+        localStorage.setItem(`resetCode_${user.id}`, JSON.stringify({ code, expires: Date.now() + 10 * 60 * 1000 }));
+        alert(`Reset code generated: ${code} (valid for 10 minutes). Use this code to reset your password.`);
+        console.log(`Reset code ${code} generated for user ${user.username}`);
+        showSection('reset-password');
+        document.getElementById('reset-username').value = username;
+      } catch (err) {
+        console.error('Error requesting password reset:', err);
+        alert('Failed to request password reset. Check console for details.');
       }
-      const data = getData();
-      const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-      if (!user) {
-        alert('User not found');
-        return;
-      }
-      const code = generateResetCode();
-      localStorage.setItem(`resetCode_${user.id}`, JSON.stringify({ code, expires: Date.now() + 10 * 60 * 1000 }));
-      alert(`Reset code generated: ${code} (valid for 10 minutes).`);
-      showSection('reset-password');
-      document.getElementById('reset-username').value = username;
     }
 
     function completePasswordReset() {
       try {
+        console.log('Completing password reset...');
         const username = document.getElementById('reset-username').value;
         const code = document.getElementById('reset-code').value;
         const newPassword = document.getElementById('new-password').value;
+        if (!username || !code || !newPassword) {
+          document.getElementById('reset-error').textContent = 'Please fill in all fields';
+          document.getElementById('reset-error').classList.remove('hidden');
+          console.warn('Reset failed: Missing fields');
+          return;
+        }
         const data = getData();
         const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
         if (!user) {
           document.getElementById('reset-error').textContent = 'User not found';
           document.getElementById('reset-error').classList.remove('hidden');
+          console.warn('Reset failed: User not found for', username);
           return;
         }
         const resetData = JSON.parse(localStorage.getItem(`resetCode_${user.id}`) || '{}');
         if (!resetData.code || resetData.code !== code || Date.now() > resetData.expires) {
           document.getElementById('reset-error').textContent = 'Invalid or expired reset code';
           document.getElementById('reset-error').classList.remove('hidden');
+          console.warn('Reset failed: Invalid or expired code for', username);
           return;
         }
         user.password = btoa(newPassword);
         saveData(data);
         localStorage.removeItem(`resetCode_${user.id}`);
-        alert('Password updated successfully');
+        alert('Password updated successfully. Please log in with your new password.');
+        console.log(`Password reset successful for ${user.username}`);
         showSection('login');
+        document.getElementById('reset-username').value = '';
+        document.getElementById('reset-code').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('reset-error').classList.add('hidden');
       } catch (err) {
-        console.error('Error resetting password:', err);
-        document.getElementById('reset-error').textContent = 'Error resetting password';
+        console.error('Error completing password reset:', err);
+        document.getElementById('reset-error').textContent = 'Error resetting password. Check console for details.';
         document.getElementById('reset-error').classList.remove('hidden');
       }
     }
@@ -614,11 +666,12 @@
     function handleLogin() {
       try {
         console.log('Login attempt started');
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
         if (!username || !password) {
           document.getElementById('login-error').textContent = 'Please enter username and password';
           document.getElementById('login-error').classList.remove('hidden');
+          console.warn('Login failed: Missing username or password');
           return;
         }
         const data = getData();
@@ -646,11 +699,11 @@
         } else {
           document.getElementById('login-error').textContent = 'Invalid username or password';
           document.getElementById('login-error').classList.remove('hidden');
-          console.log('Login failed: Invalid credentials');
+          console.warn('Login failed: Invalid credentials for', username);
         }
       } catch (err) {
         console.error('Login error:', err);
-        document.getElementById('login-error').textContent = 'Login failed. Check console for details.';
+        document.getElementById('login-error').textContent = 'Login failed. Check console for details or clear browser storage.';
         document.getElementById('login-error').classList.remove('hidden');
       }
     }
@@ -658,6 +711,7 @@
     function handleLogout() {
       currentUser = null;
       showSection('login');
+      console.log('User logged out');
     }
 
     function showSection(sectionId) {
@@ -1179,6 +1233,14 @@
 
     function renderCalendars() {
       try {
+        // Skip calendar rendering for now to isolate login issues
+        console.log('Skipping calendar rendering for login troubleshooting');
+        // Uncomment below when login is fixed
+        /*
+        if (typeof FullCalendar === 'undefined') {
+          console.warn('FullCalendar not loaded, skipping calendar rendering');
+          return;
+        }
         if (currentUser.role === 'admin') {
           const calendarEl = document.getElementById('admin-calendar');
           if (calendarEl) {
@@ -1229,6 +1291,7 @@
             calendar.render();
           }
         }
+        */
       } catch (err) {
         console.error('Error rendering calendars:', err);
       }
@@ -1317,7 +1380,7 @@
         const reportSelect = document.getElementById('walker-report-schedule');
         const profileDisplay = document.getElementById('walker-profile-display');
         schedulesList.innerHTML = '';
-        availableServicesList) availableServicesList.innerHTML = '';
+        availableServicesList.innerHTML = '';
         reportSelect.innerHTML = '<option value="">Select Schedule</option>';
 
         const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
@@ -1434,7 +1497,7 @@
           historyList.innerHTML += `
             <li>
               Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${r.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
               ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
             </li>
           `;
@@ -1472,20 +1535,4 @@
         schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
         const event = calendarData.events.find(e => e.advocateId === schedule.walkerId && e.clientId === schedule.clientId && e.start.includes(schedule.date));
         if (event) {
-          event.status = schedule.status === 'completed' ? 'booked' : schedule.status;
-          saveLocalEvent(event);
-        }
-        saveData(data);
-        alert(`${action} recorded`);
-        renderWalker();
-      } catch (err) {
-        console.error('Error handling check-in/out:', err);
-        alert('Failed to record check-in/out');
-      }
-    }
-
-    initializeData();
-    showSection('login');
-  </script>
-</body>
-</html>
+          event

@@ -4,45 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leashed Pet Care</title>
-  <!-- Temporarily commented out FullCalendar to isolate login issues -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script> -->
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f3f4f6;
       margin: 0;
-      padding: 0;
-      min-height: 100vh;
+      padding: 20px;
     }
     .container {
-      max-width: 1200px;
+      max-width: 400px;
       margin: 0 auto;
-      padding: 20px;
-    }
-    .card {
       background: white;
+      padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 20px;
-      margin-bottom: 20px;
     }
-    h1, h2, h3 { color: #1f2937; }
-    .btn {
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      border: none;
-      font-size: 16px;
-    }
-    .btn-blue { background: #3b82f6; color: white; }
-    .btn-blue:hover { background: #2563eb; }
-    .btn-red { background: #ef4444; color: white; }
-    .btn-red:hover { background: #dc2626; }
-    .btn-yellow { background: #f59e0b; color: white; }
-    .btn-yellow:hover { background: #d97706; }
-    .btn-green { background: #10b981; color: white; }
-    .btn-green:hover { background: #059669; }
-    input, select, textarea {
+    h1 { color: #1f2937; text-align: center; }
+    .error { color: #ef4444; font-size: 14px; text-align: center; }
+    input {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -50,452 +29,88 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
-    .error { color: #ef4444; font-size: 14px; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    ul { list-style: none; padding: 0; }
-    li { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab { padding: 10px; cursor: pointer; border-bottom: 2px solid transparent; }
-    .tab.active { border-bottom-color: #3b82f6; font-weight: bold; }
-    @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+    .btn {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      color: white;
+    }
+    .btn-blue { background: #3b82f6; }
+    .btn-blue:hover, .btn-blue:active { background: #2563eb; }
+    .btn-yellow { background: #f59e0b; }
+    .btn-yellow:hover, .btn-yellow:active { background: #d97706; }
+    .btn-red { background: #ef4444; }
+    .btn-red:hover, .btn-red:active { background: #dc2626; }
     .hidden { display: none; }
-    #admin-calendar { max-height: 600px; overflow: auto; }
-    #walker-calendar, #client-calendar { max-height: 400px; overflow: auto; }
-    textarea { resize: vertical; max-height: 100px; }
-    img.map { max-width: 100%; height: auto; }
   </style>
 </head>
 <body>
   <div id="login" class="container">
-    <div class="card">
-      <h1>Leashed Pet Care Login</h1>
-      <div id="login-error" class="error hidden"></div>
-      <div>
-        <label for="username">Username</label>
-        <input id="username" type="text" placeholder="Enter username" required>
-      </div>
-      <div>
-        <label for="password">Password</label>
-        <input id="password" type="password" placeholder="Enter password" required>
-      </div>
-      <button class="btn btn-blue" onclick="handleLogin()">Login</button>
-      <button class="btn btn-yellow mt-2" onclick="requestPasswordReset()">Reset Password</button>
-    </div>
+    <h1>Leashed Pet Care Login</h1>
+    <div id="login-error" class="error hidden"></div>
+    <input id="username" type="text" placeholder="Enter username (e.g., admin)" required>
+    <input id="password" type="password" placeholder="Enter password (e.g., admin123)" required>
+    <button class="btn btn-blue" onclick="handleLogin()">Login</button>
+    <button class="btn btn-yellow" onclick="showSection('reset-password')">Reset Password</button>
   </div>
   <div id="reset-password" class="container hidden">
-    <div class="card">
-      <h1>Reset Password</h1>
-      <div id="reset-error" class="error hidden"></div>
-      <div>
-        <label for="reset-username">Username</label>
-        <input id="reset-username" type="text" placeholder="Enter username" required>
-      </div>
-      <div>
-        <label for="reset-code">Reset Code</label>
-        <input id="reset-code" type="text" placeholder="Enter reset code" required>
-      </div>
-      <div>
-        <label for="new-password">New Password</label>
-        <input id="new-password" type="password" placeholder="Enter new password" required>
-      </div>
-      <button class="btn btn-blue" onclick="completePasswordReset()">Submit</button>
-      <button class="btn btn-red mt-2" onclick="showSection('login')">Cancel</button>
-    </div>
+    <h1>Reset Password</h1>
+    <div id="reset-error" class="error hidden"></div>
+    <input id="reset-username" type="text" placeholder="Enter username" required>
+    <input id="reset-code" type="text" placeholder="Enter reset code" required>
+    <input id="new-password" type="password" placeholder="Enter new password" required>
+    <button class="btn btn-blue" onclick="completePasswordReset()">Submit</button>
+    <button class="btn btn-red" onclick="showSection('login')">Cancel</button>
   </div>
-  <div id="admin" class="container hidden">
-    <div class="flex-between">
-      <h1>Admin Dashboard</h1>
-      <button class="btn btn-red" onclick="handleLogout()">Logout</button>
-    </div>
-    <div class="grid-2">
-      <div class="card">
-        <h2>Create New User</h2>
-        <div>
-          <label for="new-firstname">First Name</label>
-          <input id="new-firstname" type="text" placeholder="First Name" required>
-        </div>
-        <div>
-          <label for="new-lastname">Last Name</label>
-          <input id="new-lastname" type="text" placeholder="Last Name" required>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label for="new-street-number">Street Number</label>
-            <input id="new-street-number" type="text" placeholder="Street Number" required>
-          </div>
-          <div>
-            <label for="new-street-address">Street Address</label>
-            <input id="new-street-address" type="text" placeholder="Street Address" required>
-          </div>
-        </div>
-        <div>
-          <label for="new-address-line2">2nd Address Line</label>
-          <input id="new-address-line2" type="text" placeholder="Apt, Suite, etc. (optional)">
-        </div>
-        <div class="grid-3">
-          <div>
-            <label for="new-city">City</label>
-            <input id="new-city" type="text" placeholder="City" required>
-          </div>
-          <div>
-            <label for="new-state">State</label>
-            <input id="new-state" type="text" placeholder="State (e.g., CA)" required>
-          </div>
-          <div>
-            <label for="new-zip">Zip Code</label>
-            <input id="new-zip" type="text" placeholder="Zip Code" required>
-          </div>
-        </div>
-        <div>
-          <label for="new-username">Username</label>
-          <input id="new-username" type="text" placeholder="Username" required>
-        </div>
-        <div>
-          <label for="new-password">Password</label>
-          <input id="new-password" type="password" placeholder="Password" required>
-        </div>
-        <div>
-          <label for="new-role">Role</label>
-          <select id="new-role">
-            <option value="walker">Walker</option>
-            <option value="client">Client</option>
-          </select>
-        </div>
-        <div>
-          <label>Preferred Contact Method</label>
-          <div class="grid-3">
-            <label><input type="checkbox" id="new-contact-text"> Text</label>
-            <label><input type="checkbox" id="new-contact-email"> Email</label>
-            <label><input type="checkbox" id="new-contact-voice"> Voice</label>
-          </div>
-        </div>
-        <button class="btn btn-blue" onclick="createUser()">Create User</button>
-      </div>
-      <div class="card">
-        <h2>Master Calendar</h2>
-        <div id="admin-calendar" class="max-h-[600px] overflow-auto"></div>
-        <button class="btn btn-green" onclick="exportCalendarData()">Export Calendar Data</button>
-        <div class="mt-4">
-          <label for="import-data">Import Calendar Data</label>
-          <input id="import-data" type="file" accept=".json">
-          <button class="btn btn-blue mt-2" onclick="importCalendarData()">Import</button>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <h2>Dispatch Services</h2>
-      <ul id="admin-dispatch"></ul>
-    </div>
-    <div class="card">
-      <h2>User Service History</h2>
-      <select id="admin-user-select" onchange="renderAdminServiceHistory()">
-        <option value="">Select User</option>
-      </select>
-      <ul id="admin-service-history"></ul>
-    </div>
-    <div class="card">
-      <h2>Reports</h2>
-      <ul id="admin-reports"></ul>
-    </div>
-  </div>
-  <div id="walker" class="container hidden">
-    <div class="flex-between">
-      <h1>Walker Dashboard</h1>
-      <button class="btn btn-red" onclick="handleLogout()">Logout</button>
-    </div>
-    <div class="tabs">
-      <div class="tab active" data-tab="walker-schedule">Schedule</div>
-      <div class="tab" data-tab="walker-profile">Profile</div>
-      <div class="tab" data-tab="walker-history">Service History</div>
-    </div>
-    <div id="walker-schedule" class="tab-content">
-      <div class="card">
-        <h2>Available Services</h2>
-        <ul id="walker-available-services"></ul>
-      </div>
-      <div class="card">
-        <h2>Book a Service</h2>
-        <div>
-          <label for="walker-service-type">Service Type</label>
-          <select id="walker-service-type">
-            <option value="20 Minute Walk">20 Minute Walk</option>
-            <option value="30 Minute Walk">30 Minute Walk</option>
-            <option value="60 Minute Walk">60 Minute Walk</option>
-            <option value="Pet Sitting @ Client’s Home">Pet Sitting @ Client’s Home</option>
-            <option value="Overnight Boarding">Overnight Boarding</option>
-          </select>
-        </div>
-        <div>
-          <label for="walker-book-date">Preferred Date</label>
-          <input id="walker-book-date" type="date" min="2025-07-26">
-        </div>
-        <div>
-          <label for="walker-book-time">Preferred Time</label>
-          <input id="walker-book-time" type="time">
-        </div>
-        <button class="btn btn-blue" onclick="submitWalkerBooking()">Book Service</button>
-      </div>
-      <div class="card">
-        <h2>Your Schedules</h2>
-        <div id="walker-calendar" class="max-h-[400px] overflow-auto"></div>
-        <h3>Set Availability</h3>
-        <div>
-          <label for="walker-date">Date</label>
-          <input id="walker-date" type="date" min="2025-07-26">
-        </div>
-        <div>
-          <label for="walker-time">Time</label>
-          <input id="walker-time" type="time">
-        </div>
-        <button class="btn btn-blue" onclick="setAvailability()">Set Availability</button>
-        <ul id="walker-schedules"></ul>
-      </div>
-      <div class="card">
-        <h2>Submit Report</h2>
-        <select id="walker-report-schedule" class="mb-4">
-          <option value="">Select Schedule</option>
-        </select>
-        <div class="grid-2">
-          <label><input type="checkbox" id="walker-report-poop"> Poop</label>
-          <label><input type="checkbox" id="walker-report-pee"> Pee</label>
-        </div>
-        <div>
-          <label for="walker-report-notes">Notes (max 250 characters)</label>
-          <textarea id="walker-report-notes" maxlength="250" placeholder="Enter walk notes"></textarea>
-        </div>
-        <div>
-          <label for="walker-report-gps">GPS Coordinates</label>
-          <input id="walker-report-gps" type="text" placeholder="e.g., 37.7749,-122.4194" readonly>
-        </div>
-        <button class="btn btn-green" onclick="startGpsTracking()">Start GPS Tracking</button>
-        <button class="btn btn-red" onclick="endGpsTracking()">End GPS Tracking</button>
-        <button class="btn btn-blue mt-2" onclick="submitWalkerReport()">Submit Report</button>
-      </div>
-    </div>
-    <div id="walker-profile" class="tab-content hidden">
-      <div class="card">
-        <h2>Your Profile</h2>
-        <div id="walker-profile-display"></div>
-        <h3>Update Profile</h3>
-        <div>
-          <label for="walker-firstname">First Name</label>
-          <input id="walker-firstname" type="text" placeholder="First Name">
-        </div>
-        <div>
-          <label for="walker-lastname">Last Name</label>
-          <input id="walker-lastname" type="text" placeholder="Last Name">
-        </div>
-        <div class="grid-2">
-          <div>
-            <label for="walker-street-number">Street Number</label>
-            <input id="walker-street-number" type="text" placeholder="Street Number">
-          </div>
-          <div>
-            <label for="walker-street-address">Street Address</label>
-            <input id="walker-street-address" type="text" placeholder="Street Address">
-          </div>
-        </div>
-        <div>
-          <label for="walker-address-line2">2nd Address Line</label>
-          <input id="walker-address-line2" type="text" placeholder="Apt, Suite, etc. (optional)">
-        </div>
-        <div class="grid-3">
-          <div>
-            <label for="walker-city">City</label>
-            <input id="walker-city" type="text" placeholder="City">
-          </div>
-          <div>
-            <label for="walker-state">State</label>
-            <input id="walker-state" type="text" placeholder="State (e.g., CA)">
-          </div>
-          <div>
-            <label for="walker-zip">Zip Code</label>
-            <input id="walker-zip" type="text" placeholder="Zip Code">
-          </div>
-        </div>
-        <div>
-          <label>Preferred Contact Method</label>
-          <div class="grid-3">
-            <label><input type="checkbox" id="walker-contact-text"> Text</label>
-            <label><input type="checkbox" id="walker-contact-email"> Email</label>
-            <label><input type="checkbox" id="walker-contact-voice"> Voice</label>
-          </div>
-        </div>
-        <button class="btn btn-blue" onclick="updateWalkerProfile()">Save Profile</button>
-        <h3>Update Password</h3>
-        <button class="btn btn-yellow" onclick="requestPasswordReset()">Request Password Reset</button>
-      </div>
-    </div>
-    <div id="walker-history" class="tab-content hidden">
-      <div class="card">
-        <h2>Service History</h2>
-        <ul id="walker-service-history"></ul>
-      </div>
-    </div>
-  </div>
-  <div id="client" class="container hidden">
-    <div class="flex-between">
-      <h1>Client Dashboard</h1>
-      <button class="btn btn-red" onclick="handleLogout()">Logout</button>
-    </div>
-    <div class="tabs">
-      <div class="tab active" data-tab="client-schedule">Schedule</div>
-      <div class="tab" data-tab="client-profile">Profile</div>
-      <div class="tab" data-tab="client-history">Service History</div>
-    </div>
-    <div id="client-schedule" class="tab-content">
-      <div class="card">
-        <h2>Book a Service</h2>
-        <div>
-          <label for="client-service-type">Service Type</label>
-          <select id="client-service-type">
-            <option value="20 Minute Walk">20 Minute Walk</option>
-            <option value="30 Minute Walk">30 Minute Walk</option>
-            <option value="60 Minute Walk">60 Minute Walk</option>
-            <option value="Pet Sitting @ Client’s Home">Pet Sitting @ Client’s Home</option>
-            <option value="Overnight Boarding">Overnight Boarding</option>
-          </select>
-        </div>
-        <div>
-          <label for="client-date">Preferred Date</label>
-          <input id="client-date" type="date" min="2025-07-26">
-        </div>
-        <div>
-          <label for="client-time">Preferred Time</label>
-          <input id="client-time" type="time">
-        </div>
-        <button class="btn btn-blue" onclick="submitClientRequest()">Book Service</button>
-      </div>
-      <div class="card">
-        <h2>Your Schedules</h2>
-        <div id="client-calendar" class="max-h-[400px] overflow-auto"></div>
-        <ul id="client-schedules"></ul>
-      </div>
-    </div>
-    <div id="client-profile" class="tab-content hidden">
-      <div class="card">
-        <h2>Your Profile</h2>
-        <div id="client-profile-display"></div>
-        <h3>Update Profile</h3>
-        <div>
-          <label for="client-firstname">First Name</label>
-          <input id="client-firstname" type="text" placeholder="First Name">
-        </div>
-        <div>
-          <label for="client-lastname">Last Name</label>
-          <input id="client-lastname" type="text" placeholder="Last Name">
-        </div>
-        <div class="grid-2">
-          <div>
-            <label for="client-street-number">Street Number</label>
-            <input id="client-street-number" type="text" placeholder="Street Number">
-          </div>
-          <div>
-            <label for="client-street-address">Street Address</label>
-            <input id="client-street-address" type="text" placeholder="Street Address">
-          </div>
-        </div>
-        <div>
-          <label for="client-address-line2">2nd Address Line</label>
-          <input id="client-address-line2" type="text" placeholder="Apt, Suite, etc. (optional)">
-        </div>
-        <div class="grid-3">
-          <div>
-            <label for="client-city">City</label>
-            <input id="client-city" type="text" placeholder="City">
-          </div>
-          <div>
-            <label for="client-state">State</label>
-            <input id="client-state" type="text" placeholder="State (e.g., CA)">
-          </div>
-          <div>
-            <label for="client-zip">Zip Code</label>
-            <input id="client-zip" type="text" placeholder="Zip Code">
-          </div>
-        </div>
-        <div>
-          <label>Preferred Contact Method</label>
-          <div class="grid-3">
-            <label><input type="checkbox" id="client-contact-text"> Text</label>
-            <label><input type="checkbox" id="client-contact-email"> Email</label>
-            <label><input type="checkbox" id="client-contact-voice"> Voice</label>
-          </div>
-        </div>
-        <button class="btn btn-blue" onclick="updateClientProfile()">Save Profile</button>
-        <h3>Update Password</h3>
-        <button class="btn btn-yellow" onclick="requestPasswordReset()">Request Password Reset</button>
-      </div>
-    </div>
-    <div id="client-history" class="tab-content hidden">
-      <div class="card">
-        <h2>Service History</h2>
-        <ul id="client-service-history"></ul>
-      </div>
-    </div>
+  <div id="dashboard" class="container hidden">
+    <h1>Welcome, <span id="user-name"></span></h1>
+    <p>Role: <span id="user-role"></span></p>
+    <button class="btn btn-red" onclick="handleLogout()">Logout</button>
   </div>
   <script>
-    const CALENDAR_DATA_URL = 'https://domesticengineer.github.io/Leashed_App_Pro/calendar-data.json';
-    let calendarData = { events: [] };
     let currentUser = null;
-    let gpsTracking = { start: null, end: null, active: false };
 
     function initializeData() {
+      alert('Initializing app data...');
+      const defaultData = {
+        users: [
+          {
+            id: 'admin1',
+            username: 'admin',
+            password: btoa('admin123'),
+            role: 'admin',
+            firstName: 'Admin'
+          },
+          {
+            id: 'walker1',
+            username: 'walker1',
+            password: btoa('walker123'),
+            role: 'walker',
+            firstName: 'John'
+          },
+          {
+            id: 'client1',
+            username: 'client1',
+            password: btoa('client123'),
+            role: 'client',
+            firstName: 'Jane'
+          }
+        ]
+      };
       try {
-        console.log('Initializing data...');
-        const defaultData = {
-          users: [
-            {
-              id: 'admin1',
-              firstName: 'Admin',
-              lastName: 'User',
-              username: 'admin',
-              password: btoa('admin123'),
-              role: 'admin',
-              address: { streetNumber: '', streetAddress: '', addressLine2: '', city: '', state: '', zip: '' },
-              preferredContact: { text: false, email: false, voice: false }
-            },
-            {
-              id: 'walker1',
-              firstName: 'John',
-              lastName: 'Doe',
-              username: 'walker1',
-              password: btoa('walker123'),
-              role: 'walker',
-              address: { streetNumber: '123', streetAddress: 'Elm St', addressLine2: '', city: 'Anytown', state: 'CA', zip: '12345' },
-              preferredContact: { text: true, email: false, voice: false }
-            },
-            {
-              id: 'client1',
-              firstName: 'Jane',
-              lastName: 'Smith',
-              username: 'client1',
-              password: btoa('client123'),
-              role: 'client',
-              address: { streetNumber: '456', streetAddress: 'Oak St', addressLine2: 'Apt 2B', city: 'Othertown', state: 'NY', zip: '67890' },
-              preferredContact: { text: false, email: true, voice: false }
-            }
-          ],
-          schedules: [
-            { id: 'sch1', clientId: 'client1', walkerId: 'walker1', pet: 'Buddy', serviceType: '20 Minute Walk', date: '2025-07-25', time: '10:00', status: 'pending', paymentStatus: 'unpaid' }
-          ],
-          checkIns: [],
-          reports: []
-        };
         if (!localStorage.getItem('leashedData')) {
           localStorage.setItem('leashedData', JSON.stringify(defaultData));
-          console.log('Default data initialized successfully');
+          alert('Default users created: admin/admin123, walker1/walker123, client1/client123');
         } else {
-          console.log('leashedData already exists');
-        }
-        if (!localStorage.getItem('calendarEvents')) {
-          localStorage.setItem('calendarEvents', JSON.stringify([]));
-          console.log('Initialized calendar events');
+          alert('Data already initialized');
         }
       } catch (err) {
-        console.error('Error initializing data:', err);
-        alert('Failed to initialize app data. Please clear browser storage and reload.');
+        alert('Failed to initialize data. Clear browser storage and reload.');
+        console.error('Init error:', err);
       }
     }
 
@@ -503,71 +118,25 @@
       try {
         const data = localStorage.getItem('leashedData');
         if (!data) {
-          console.warn('No leashedData found, reinitializing');
+          alert('No data found, reinitializing');
           initializeData();
-          return JSON.parse(localStorage.getItem('leashedData') || '{}');
+          return JSON.parse(localStorage.getItem('leashedData'));
         }
         return JSON.parse(data);
       } catch (err) {
-        console.error('Error parsing leashedData:', err);
-        alert('Error loading user data. Please clear browser storage and reload.');
-        return { users: [], schedules: [], checkIns: [], reports: [] };
+        alert('Error loading data. Clear browser storage and reload.');
+        console.error('Get data error:', err);
+        return { users: [] };
       }
     }
 
     function saveData(data) {
       try {
         localStorage.setItem('leashedData', JSON.stringify(data));
-        console.log('Data saved successfully');
+        alert('Data saved successfully');
       } catch (err) {
-        console.error('Error saving data:', err);
-        alert('Failed to save data. Check browser storage settings.');
-      }
-    }
-
-    function loadCalendarData() {
-      try {
-        // Skip calendar loading for now to isolate login issues
-        console.log('Skipping calendar data load for login troubleshooting');
-        // Uncomment below when login is fixed
-        /*
-        fetch(CALENDAR_DATA_URL)
-          .then(response => response.json())
-          .then(data => {
-            calendarData = data;
-            const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-            calendarData.events = [...calendarData.events, ...localEvents];
-            renderCalendars();
-          })
-          .catch(() => {
-            console.warn('Failed to fetch calendar data, using local events');
-            calendarData.events = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-            renderCalendars();
-          });
-        */
-      } catch (err) {
-        console.error('Error loading calendar data:', err);
-      }
-    }
-
-    function saveLocalEvent(event) {
-      try {
-        const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-        const existingEventIndex = localEvents.findIndex(e => e.id === event.id);
-        if (existingEventIndex !== -1) {
-          localEvents[existingEventIndex] = event;
-        } else {
-          localEvents.push(event);
-        }
-        localStorage.setItem('calendarEvents', JSON.stringify(localEvents));
-        console.log(`Saved event: ${event.status} ${event.id} for ${event.start}`);
-        // Placeholder webhook
-        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-          method: 'POST',
-          body: JSON.stringify(event)
-        }).catch(err => console.error('Webhook failed:', err));
-      } catch (err) {
-        console.error('Error saving local event:', err);
+        alert('Failed to save data');
+        console.error('Save data error:', err);
       }
     }
 
@@ -578,961 +147,135 @@
         for (let i = 0; i < 8; i++) {
           code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        console.log('Generated reset code:', code);
+        alert('Generated reset code: ' + code);
         return code;
       } catch (err) {
-        console.error('Error generating reset code:', err);
+        alert('Failed to generate reset code');
+        console.error('Code gen error:', err);
         return null;
       }
     }
 
+    function showSection(sectionId) {
+      ['login', 'reset-password', 'dashboard'].forEach(id => {
+        document.getElementById(id).classList.toggle('hidden', id !== sectionId);
+      });
+    }
+
+    function handleLogin() {
+      alert('Starting login process');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorEl = document.getElementById('login-error');
+      errorEl.classList.add('hidden');
+
+      if (!username || !password) {
+        errorEl.textContent = 'Please enter username and password';
+        errorEl.classList.remove('hidden');
+        alert('Login failed: Missing username or password');
+        return;
+      }
+
+      alert('Fetching user data');
+      const data = getData();
+      const user = data.users.find(
+        u => u.username.toLowerCase() === username.toLowerCase() && u.password === btoa(password)
+      );
+
+      if (user) {
+        currentUser = user;
+        document.getElementById('user-name').textContent = user.firstName;
+        document.getElementById('user-role').textContent = user.role;
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        alert('Login successful for ' + user.username);
+        showSection('dashboard');
+      } else {
+        errorEl.textContent = 'Invalid username or password';
+        errorEl.classList.remove('hidden');
+        alert('Login failed: Invalid credentials');
+      }
+    }
+
     function requestPasswordReset() {
+      alert('Starting password reset');
+      const username = document.getElementById('username').value || document.getElementById('reset-username').value;
+      if (!username) {
+        alert('Please enter a username');
+        return;
+      }
+      const data = getData();
+      const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+      const code = generateResetCode();
+      if (!code) {
+        alert('Failed to generate reset code');
+        return;
+      }
       try {
-        console.log('Requesting password reset...');
-        const username = currentUser ? currentUser.username : document.getElementById('username').value || document.getElementById('reset-username').value;
-        if (!username) {
-          alert('Please enter a username');
-          console.warn('Password reset failed: No username provided');
-          return;
-        }
-        const data = getData();
-        const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-        if (!user) {
-          alert('User not found');
-          console.warn('Password reset failed: User not found for', username);
-          return;
-        }
-        const code = generateResetCode();
-        if (!code) {
-          alert('Failed to generate reset code. Try again.');
-          console.error('Reset code generation failed');
-          return;
-        }
         localStorage.setItem(`resetCode_${user.id}`, JSON.stringify({ code, expires: Date.now() + 10 * 60 * 1000 }));
-        alert(`Reset code generated: ${code} (valid for 10 minutes). Use this code to reset your password.`);
-        console.log(`Reset code ${code} generated for user ${user.username}`);
+        alert(`Reset code: ${code} (valid for 10 minutes)`);
         showSection('reset-password');
         document.getElementById('reset-username').value = username;
       } catch (err) {
-        console.error('Error requesting password reset:', err);
-        alert('Failed to request password reset. Check console for details.');
+        alert('Failed to save reset code');
+        console.error('Reset code save error:', err);
       }
     }
 
     function completePasswordReset() {
-      try {
-        console.log('Completing password reset...');
-        const username = document.getElementById('reset-username').value;
-        const code = document.getElementById('reset-code').value;
-        const newPassword = document.getElementById('new-password').value;
-        if (!username || !code || !newPassword) {
-          document.getElementById('reset-error').textContent = 'Please fill in all fields';
-          document.getElementById('reset-error').classList.remove('hidden');
-          console.warn('Reset failed: Missing fields');
-          return;
-        }
-        const data = getData();
-        const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-        if (!user) {
-          document.getElementById('reset-error').textContent = 'User not found';
-          document.getElementById('reset-error').classList.remove('hidden');
-          console.warn('Reset failed: User not found for', username);
-          return;
-        }
-        const resetData = JSON.parse(localStorage.getItem(`resetCode_${user.id}`) || '{}');
-        if (!resetData.code || resetData.code !== code || Date.now() > resetData.expires) {
-          document.getElementById('reset-error').textContent = 'Invalid or expired reset code';
-          document.getElementById('reset-error').classList.remove('hidden');
-          console.warn('Reset failed: Invalid or expired code for', username);
-          return;
-        }
-        user.password = btoa(newPassword);
-        saveData(data);
-        localStorage.removeItem(`resetCode_${user.id}`);
-        alert('Password updated successfully. Please log in with your new password.');
-        console.log(`Password reset successful for ${user.username}`);
-        showSection('login');
-        document.getElementById('reset-username').value = '';
-        document.getElementById('reset-code').value = '';
-        document.getElementById('new-password').value = '';
-        document.getElementById('reset-error').classList.add('hidden');
-      } catch (err) {
-        console.error('Error completing password reset:', err);
-        document.getElementById('reset-error').textContent = 'Error resetting password. Check console for details.';
-        document.getElementById('reset-error').classList.remove('hidden');
-      }
-    }
+      alert('Completing password reset');
+      const username = document.getElementById('reset-username').value;
+      const code = document.getElementById('reset-code').value;
+      const newPassword = document.getElementById('new-password').value;
+      const errorEl = document.getElementById('reset-error');
+      errorEl.classList.add('hidden');
 
-    function handleLogin() {
-      try {
-        console.log('Login attempt started');
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        if (!username || !password) {
-          document.getElementById('login-error').textContent = 'Please enter username and password';
-          document.getElementById('login-error').classList.remove('hidden');
-          console.warn('Login failed: Missing username or password');
-          return;
-        }
-        const data = getData();
-        console.log('Users in storage:', data.users.map(u => u.username));
-        const user = data.users.find(
-          u => u.username.toLowerCase() === username.toLowerCase() && u.password === btoa(password)
-        );
-        if (user) {
-          currentUser = user;
-          document.getElementById('login-error').classList.add('hidden');
-          document.getElementById('username').value = '';
-          document.getElementById('password').value = '';
-          console.log(`Login successful for ${user.username} (${user.role})`);
-          if (user.role === 'admin') {
-            showSection('admin');
-            renderAdmin();
-          } else if (user.role === 'walker') {
-            showSection('walker');
-            renderWalker();
-          } else {
-            showSection('client');
-            renderClient();
-          }
-          loadCalendarData();
-        } else {
-          document.getElementById('login-error').textContent = 'Invalid username or password';
-          document.getElementById('login-error').classList.remove('hidden');
-          console.warn('Login failed: Invalid credentials for', username);
-        }
-      } catch (err) {
-        console.error('Login error:', err);
-        document.getElementById('login-error').textContent = 'Login failed. Check console for details or clear browser storage.';
-        document.getElementById('login-error').classList.remove('hidden');
+      if (!username || !code || !newPassword) {
+        errorEl.textContent = 'Please fill in all fields';
+        errorEl.classList.remove('hidden');
+        alert('Reset failed: Missing fields');
+        return;
       }
+
+      const data = getData();
+      const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (!user) {
+        errorEl.textContent = 'User not found';
+        errorEl.classList.remove('hidden');
+        alert('Reset failed: User not found');
+        return;
+      }
+
+      const resetData = JSON.parse(localStorage.getItem(`resetCode_${user.id}`) || '{}');
+      if (!resetData.code || resetData.code !== code || Date.now() > resetData.expires) {
+        errorEl.textContent = 'Invalid or expired reset code';
+        errorEl.classList.remove('hidden');
+        alert('Reset failed: Invalid or expired code');
+        return;
+      }
+
+      user.password = btoa(newPassword);
+      saveData(data);
+      localStorage.removeItem(`resetCode_${user.id}`);
+      alert('Password updated successfully');
+      showSection('login');
+      document.getElementById('reset-username').value = '';
+      document.getElementById('reset-code').value = '';
+      document.getElementById('new-password').value = '';
     }
 
     function handleLogout() {
       currentUser = null;
       showSection('login');
-      console.log('User logged out');
+      alert('Logged out');
     }
 
-    function showSection(sectionId) {
-      ['login', 'reset-password', 'admin', 'walker', 'client'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.toggle('hidden', id !== sectionId);
-      });
-    }
-
-    function createUser() {
-      try {
-        const firstName = document.getElementById('new-firstname').value;
-        const lastName = document.getElementById('new-lastname').value;
-        const streetNumber = document.getElementById('new-street-number').value;
-        const streetAddress = document.getElementById('new-street-address').value;
-        const addressLine2 = document.getElementById('new-address-line2').value;
-        const city = document.getElementById('new-city').value;
-        const state = document.getElementById('new-state').value;
-        const zip = document.getElementById('new-zip').value;
-        const username = document.getElementById('new-username').value;
-        const password = document.getElementById('new-password').value;
-        const role = document.getElementById('new-role').value;
-        const contactText = document.getElementById('new-contact-text').checked;
-        const contactEmail = document.getElementById('new-contact-email').checked;
-        const contactVoice = document.getElementById('new-contact-voice').checked;
-        const data = getData();
-
-        if (data.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-          alert('Username already exists');
-          return;
-        }
-
-        data.users.push({
-          id: `user${data.users.length + 1}`,
-          firstName,
-          lastName,
-          address: { streetNumber, streetAddress, addressLine2, city, state, zip },
-          username,
-          password: btoa(password),
-          role,
-          preferredContact: { text: contactText, email: contactEmail, voice: contactVoice }
-        });
-
-        saveData(data);
-        document.getElementById('new-firstname').value = '';
-        document.getElementById('new-lastname').value = '';
-        document.getElementById('new-street-number').value = '';
-        document.getElementById('new-street-address').value = '';
-        document.getElementById('new-address-line2').value = '';
-        document.getElementById('new-city').value = '';
-        document.getElementById('new-state').value = '';
-        document.getElementById('new-zip').value = '';
-        document.getElementById('new-username').value = '';
-        document.getElementById('new-password').value = '';
-        document.getElementById('new-contact-text').checked = false;
-        document.getElementById('new-contact-email').checked = false;
-        document.getElementById('new-contact-voice').checked = false;
-        alert('User created successfully');
-        renderAdmin();
-      } catch (err) {
-        console.error('Error creating user:', err);
-        alert('Failed to create user');
-      }
-    }
-
-    function updateWalkerProfile() {
-      try {
-        const data = getData();
-        const user = data.users.find(u => u.id === currentUser.id);
-        user.firstName = document.getElementById('walker-firstname').value;
-        user.lastName = document.getElementById('walker-lastname').value;
-        user.address.streetNumber = document.getElementById('walker-street-number').value;
-        user.address.streetAddress = document.getElementById('walker-street-address').value;
-        user.address.addressLine2 = document.getElementById('walker-address-line2').value;
-        user.address.city = document.getElementById('walker-city').value;
-        user.address.state = document.getElementById('walker-state').value;
-        user.address.zip = document.getElementById('walker-zip').value;
-        user.preferredContact.text = document.getElementById('walker-contact-text').checked;
-        user.preferredContact.email = document.getElementById('walker-contact-email').checked;
-        user.preferredContact.voice = document.getElementById('walker-contact-voice').checked;
-        saveData(data);
-        alert('Profile updated');
-        renderWalker();
-      } catch (err) {
-        console.error('Error updating walker profile:', err);
-        alert('Failed to update profile');
-      }
-    }
-
-    function updateClientProfile() {
-      try {
-        const data = getData();
-        const user = data.users.find(u => u.id === currentUser.id);
-        user.firstName = document.getElementById('client-firstname').value;
-        user.lastName = document.getElementById('client-lastname').value;
-        user.address.streetNumber = document.getElementById('client-street-number').value;
-        user.address.streetAddress = document.getElementById('client-street-address').value;
-        user.address.addressLine2 = document.getElementById('client-address-line2').value;
-        user.address.city = document.getElementById('client-city').value;
-        user.address.state = document.getElementById('client-state').value;
-        user.address.zip = document.getElementById('client-zip').value;
-        user.preferredContact.text = document.getElementById('client-contact-text').checked;
-        user.preferredContact.email = document.getElementById('client-contact-email').checked;
-        user.preferredContact.voice = document.getElementById('client-contact-voice').checked;
-        saveData(data);
-        alert('Profile updated');
-        renderClient();
-      } catch (err) {
-        console.error('Error updating client profile:', err);
-        alert('Failed to update profile');
-      }
-    }
-
-    function submitClientRequest() {
-      try {
-        const serviceType = document.getElementById('client-service-type').value;
-        const date = document.getElementById('client-date').value;
-        const time = document.getElementById('client-time').value;
-        if (!date || !time) {
-          alert('Please select a date and time');
-          return;
-        }
-        const start = `${date}T${time}:00`;
-        const end = new Date(start);
-        end.setHours(end.getHours() + 1);
-        const data = getData();
-        const scheduleId = `sch${data.schedules.length + 1}`;
-        data.schedules.push({
-          id: scheduleId,
-          clientId: currentUser.id,
-          walkerId: null,
-          pet: 'Pet',
-          serviceType,
-          date,
-          time,
-          status: 'pending',
-          paymentStatus: 'unpaid'
-        });
-        const event = {
-          id: `event${Date.now()}`,
-          title: `Requested: ${serviceType}`,
-          start,
-          end: end.toISOString(),
-          advocateId: null,
-          clientId: currentUser.id,
-          status: 'pending',
-          public: true
-        };
-        saveLocalEvent(event);
-        const walkers = data.users.filter(u => u.role === 'walker');
-        walkers.forEach(walker => {
-          const notification = {
-            walkerId: walker.id,
-            scheduleId,
-            serviceType,
-            date,
-            time,
-            clientId: currentUser.id,
-            preferredContact: walker.preferredContact
-          };
-          fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-            method: 'POST',
-            body: JSON.stringify(notification)
-          }).catch(err => console.error('Webhook failed:', err));
-        });
-        saveData(data);
-        alert('Booking submitted! Walkers notified.');
-        document.getElementById('client-service-type').value = '20 Minute Walk';
-        document.getElementById('client-date').value = '';
-        document.getElementById('client-time').value = '';
-        renderClient();
-      } catch (err) {
-        console.error('Error submitting client request:', err);
-        alert('Failed to submit booking');
-      }
-    }
-
-    function submitWalkerBooking() {
-      try {
-        const serviceType = document.getElementById('walker-service-type').value;
-        const date = document.getElementById('walker-book-date').value;
-        const time = document.getElementById('walker-book-time').value;
-        if (!date || !time) {
-          alert('Please select a date and time');
-          return;
-        }
-        const start = `${date}T${time}:00`;
-        const end = new Date(start);
-        end.setHours(end.getHours() + 1);
-        const data = getData();
-        const scheduleId = `sch${data.schedules.length + 1}`;
-        data.schedules.push({
-          id: scheduleId,
-          clientId: null,
-          walkerId: currentUser.id,
-          pet: 'TBD',
-          serviceType,
-          date,
-          time,
-          status: 'pending',
-          paymentStatus: 'unpaid'
-        });
-        const event = {
-          id: `event${Date.now()}`,
-          title: `Requested: ${serviceType}`,
-          start,
-          end: end.toISOString(),
-          advocateId: currentUser.id,
-          clientId: null,
-          status: 'pending',
-          public: false
-        };
-        saveLocalEvent(event);
-        saveData(data);
-        alert('Booking submitted! Awaiting admin assignment.');
-        document.getElementById('walker-service-type').value = '20 Minute Walk';
-        document.getElementById('walker-book-date').value = '';
-        document.getElementById('walker-book-time').value = '';
-        renderWalker();
-      } catch (err) {
-        console.error('Error submitting walker booking:', err);
-        alert('Failed to submit booking');
-      }
-    }
-
-    function acceptService(scheduleId) {
-      try {
-        const data = getData();
-        const schedule = data.schedules.find(s => s.id === scheduleId);
-        if (!schedule) {
-          alert('Schedule not found');
-          return;
-        }
-        schedule.walkerId = currentUser.id;
-        schedule.status = 'booked';
-        const event = calendarData.events.find(e => e.id === schedule.id || (e.clientId === schedule.clientId && e.start.includes(schedule.date)));
-        if (event) {
-          event.advocateId = currentUser.id;
-          event.status = 'booked';
-          event.title = `Booked: ${schedule.serviceType}`;
-          saveLocalEvent(event);
-        }
-        saveData(data);
-        const notification = {
-          walkerId: currentUser.id,
-          scheduleId,
-          serviceType: schedule.serviceType,
-          date: schedule.date,
-          time: schedule.time,
-          clientId: schedule.clientId,
-          status: 'assigned',
-          preferredContact: currentUser.preferredContact
-        };
-        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-          method: 'POST',
-          body: JSON.stringify(notification)
-        }).catch(err => console.error('Webhook failed:', err));
-        alert('Service accepted');
-        renderWalker();
-      } catch (err) {
-        console.error('Error accepting service:', err);
-        alert('Failed to accept service');
-      }
-    }
-
-    function assignService(scheduleId, walkerId) {
-      try {
-        const data = getData();
-        const schedule = data.schedules.find(s => s.id === scheduleId);
-        if (!schedule) {
-          alert('Schedule not found');
-          return;
-        }
-        schedule.walkerId = walkerId;
-        schedule.status = 'booked';
-        const event = calendarData.events.find(e => e.id === schedule.id || (e.clientId === schedule.clientId && e.start.includes(schedule.date)));
-        if (event) {
-          event.advocateId = walkerId;
-          event.status = 'booked';
-          event.title = `Booked: ${schedule.serviceType}`;
-          saveLocalEvent(event);
-        }
-        const walker = data.users.find(u => u.id === walkerId);
-        const notification = {
-          walkerId,
-          scheduleId,
-          serviceType: schedule.serviceType,
-          date: schedule.date,
-          time: schedule.time,
-          clientId: schedule.clientId,
-          status: 'assigned',
-          preferredContact: walker.preferredContact
-        };
-        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-          method: 'POST',
-          body: JSON.stringify(notification)
-        }).catch(err => console.error('Webhook failed:', err));
-        saveData(data);
-        alert('Service assigned');
-        renderAdmin();
-      } catch (err) {
-        console.error('Error assigning service:', err);
-        alert('Failed to assign service');
-      }
-    }
-
-    function setAvailability() {
-      try {
-        const date = document.getElementById('walker-date').value;
-        const time = document.getElementById('walker-time').value;
-        if (!date || !time) {
-          alert('Please select a date and time');
-          return;
-        }
-        const start = `${date}T${time}:00`;
-        const end = new Date(start);
-        end.setHours(end.getHours() + 1);
-        const event = {
-          id: `event${Date.now()}`,
-          title: 'Available Slot',
-          start,
-          end: end.toISOString(),
-          advocateId: currentUser.id,
-          clientId: null,
-          status: 'available',
-          public: true
-        };
-        saveLocalEvent(event);
-        alert('Availability set');
-        document.getElementById('walker-date').value = '';
-        document.getElementById('walker-time').value = '';
-        renderWalker();
-      } catch (err) {
-        console.error('Error setting availability:', err);
-        alert('Failed to set availability');
-      }
-    }
-
-    function startGpsTracking() {
-      try {
-        if (gpsTracking.active) {
-          alert('GPS tracking already active');
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            gpsTracking.start = `${pos.coords.latitude},${pos.coords.longitude}`;
-            gpsTracking.active = true;
-            document.getElementById('walker-report-gps').value = gpsTracking.start;
-            alert('GPS tracking started');
-          },
-          err => alert('GPS access denied: ' + err.message)
-        );
-      } catch (err) {
-        console.error('Error starting GPS tracking:', err);
-        alert('Failed to start GPS tracking');
-      }
-    }
-
-    function endGpsTracking() {
-      try {
-        if (!gpsTracking.active) {
-          alert('No active GPS tracking');
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            gpsTracking.end = `${pos.coords.latitude},${pos.coords.longitude}`;
-            gpsTracking.active = false;
-            document.getElementById('walker-report-gps').value = gpsTracking.end;
-            alert('GPS tracking ended');
-          },
-          err => alert('GPS access denied: ' + err.message)
-        );
-      } catch (err) {
-        console.error('Error ending GPS tracking:', err);
-        alert('Failed to end GPS tracking');
-      }
-    }
-
-    function submitWalkerReport() {
-      try {
-        const scheduleId = document.getElementById('walker-report-schedule').value;
-        const poop = document.getElementById('walker-report-poop').checked;
-        const pee = document.getElementById('walker-report-pee').checked;
-        const notes = document.getElementById('walker-report-notes').value;
-        const gps = gpsTracking.end || document.getElementById('walker-report-gps').value;
-        if (!scheduleId) {
-          alert('Please select a schedule');
-          return;
-        }
-        const data = getData();
-        const schedule = data.schedules.find(s => s.id === scheduleId);
-        const startTime = new Date().toISOString();
-        const endTime = new Date().toISOString();
-        const staticMapUrl = gpsTracking.start && gpsTracking.end
-          ? `https://staticmap.openstreetmap.de/staticmap.php?center=${gpsTracking.start.split(',')[0]},${gpsTracking.start.split(',')[1]}&zoom=14&size=400x200&path=color:red|weight:5|${gpsTracking.start}|${gpsTracking.end}`
-          : '';
-        const report = {
-          id: `rep${data.reports.length + 1}`,
-          scheduleId,
-          walkerId: currentUser.id,
-          startTime,
-          endTime,
-          poop,
-          pee,
-          notes,
-          gpsStart: gpsTracking.start,
-          gpsEnd: gps,
-          staticMapUrl,
-          timestamp: new Date().toISOString()
-        };
-        data.reports.push(report);
-        schedule.status = 'completed';
-        const event = calendarData.events.find(e => e.clientId === schedule.clientId && e.start.includes(schedule.date));
-        if (event) {
-          event.status = 'booked';
-          event.title = `Booked: ${schedule.serviceType}`;
-          saveLocalEvent(event);
-        }
-        const client = data.users.find(u => u.id === schedule.clientId);
-        const paymentLink = schedule.serviceType === '20 Minute Walk'
-          ? 'https://pay.stayleashed.com/20MinWalk'
-          : schedule.serviceType === '30 Minute Walk'
-          ? 'https://pay.stayleashed.com/30MinWalk'
-          : '';
-        const notification = {
-          clientId: schedule.clientId,
-          serviceType: schedule.serviceType,
-          startTime,
-          endTime,
-          poop,
-          pee,
-          notes,
-          gpsStart: gpsTracking.start || null,
-          gpsEnd: gps || null,
-          staticMapUrl,
-          paymentLink,
-          preferredContact: client ? client.preferredContact : {}
-        };
-        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-          method: 'POST',
-          body: JSON.stringify(notification)
-        }).catch(err => console.error('Webhook failed:', err));
-        saveData(data);
-        gpsTracking = { start: null, end: null, active: false };
-        document.getElementById('walker-report-schedule').value = '';
-        document.getElementById('walker-report-poop').checked = false;
-        document.getElementById('walker-report-pee').checked = false;
-        document.getElementById('walker-report-notes').value = '';
-        document.getElementById('walker-report-gps').value = '';
-        alert('Report submitted');
-        renderWalker();
-      } catch (err) {
-        console.error('Error submitting walker report:', err);
-        alert('Failed to submit report');
-      }
-    }
-
-    function updatePaymentStatus(scheduleId, status) {
-      try {
-        const data = getData();
-        const schedule = data.schedules.find(s => s.id === scheduleId);
-        if (schedule) {
-          schedule.paymentStatus = status;
-          saveData(data);
-          renderAdminServiceHistory();
-        }
-      } catch (err) {
-        console.error('Error updating payment status:', err);
-        alert('Failed to update payment status');
-      }
-    }
-
-    function exportCalendarData() {
-      try {
-        const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-        const blob = new Blob([JSON.stringify({ events: localEvents }, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'calendar-data.json';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error('Error exporting calendar data:', err);
-        alert('Failed to export calendar data');
-      }
-    }
-
-    function importCalendarData() {
-      try {
-        const fileInput = document.getElementById('import-data');
-        const file = fileInput.files[0];
-        if (!file) {
-          alert('Please select a file');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          try {
-            const importedData = JSON.parse(e.target.result);
-            localStorage.setItem('calendarEvents', JSON.stringify(importedData.events));
-            loadCalendarData();
-            alert('Calendar data imported successfully');
-          } catch (err) {
-            console.error('Error parsing imported data:', err);
-            alert('Invalid JSON data');
-          }
-        };
-        reader.readAsText(file);
-      } catch (err) {
-        console.error('Error importing calendar data:', err);
-        alert('Failed to import calendar data');
-      }
-    }
-
-    function renderCalendars() {
-      try {
-        // Skip calendar rendering for now to isolate login issues
-        console.log('Skipping calendar rendering for login troubleshooting');
-        // Uncomment below when login is fixed
-        /*
-        if (typeof FullCalendar === 'undefined') {
-          console.warn('FullCalendar not loaded, skipping calendar rendering');
-          return;
-        }
-        if (currentUser.role === 'admin') {
-          const calendarEl = document.getElementById('admin-calendar');
-          if (calendarEl) {
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-              initialView: 'timeGridWeek',
-              events: calendarData.events,
-              eventColor: '#ef4444',
-              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
-              slotMinTime: '08:00:00',
-              slotMaxTime: '20:00:00',
-              height: '600px',
-              eventClick: function(info) {
-                if (confirm(`Delete event ${info.event.title}?`)) {
-                  calendarData.events = calendarData.events.filter(e => e.id !== info.event.id);
-                  localStorage.setItem('calendarEvents', JSON.stringify(calendarData.events));
-                  calendar.refetchEvents();
-                }
-              }
-            });
-            calendar.render();
-          }
-        } else if (currentUser.role === 'walker') {
-          const calendarEl = document.getElementById('walker-calendar');
-          if (calendarEl) {
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-              initialView: 'timeGridWeek',
-              events: calendarData.events.filter(e => e.advocateId === currentUser.id || e.status === 'pending'),
-              eventColor: '#3b82f6',
-              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
-              slotMinTime: '08:00:00',
-              slotMaxTime: '20:00:00',
-              height: '400px'
-            });
-            calendar.render();
-          }
-        } else {
-          const calendarEl = document.getElementById('client-calendar');
-          if (calendarEl) {
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-              initialView: 'timeGridWeek',
-              events: calendarData.events.filter(e => e.clientId === currentUser.id || e.status === 'pending'),
-              eventColor: '#10b981',
-              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
-              slotMinTime: '08:00:00',
-              slotMaxTime: '20:00:00',
-              height: '400px'
-            });
-            calendar.render();
-          }
-        }
-        */
-      } catch (err) {
-        console.error('Error rendering calendars:', err);
-      }
-    }
-
-    function renderAdmin() {
-      try {
-        const data = getData();
-        const userSelect = document.getElementById('admin-user-select');
-        const dispatchList = document.getElementById('admin-dispatch');
-        const reportsList = document.getElementById('admin-reports');
-        userSelect.innerHTML = '<option value="">Select User</option>';
-        dispatchList.innerHTML = '';
-        reportsList.innerHTML = '';
-
-        data.users.forEach(u => {
-          userSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
-        });
-
-        const unassignedSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
-        unassignedSchedules.forEach(s => {
-          const walkerOptions = data.users
-            .filter(u => u.role === 'walker')
-            .map(u => `<option value="${u.id}">${u.firstName} ${u.lastName}</option>`)
-            .join('');
-          dispatchList.innerHTML += `
-            <li class="flex-between">
-              <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
-              <div>
-                <select id="dispatch-walker-${s.id}">
-                  <option value="">Select Walker</option>
-                  ${walkerOptions}
-                </select>
-                <button class="btn btn-blue" onclick="assignService('${s.id}', document.getElementById('dispatch-walker-${s.id}').value)">Assign</button>
-              </div>
-            </li>
-          `;
-        });
-
-        data.reports.forEach(r => {
-          const schedule = data.schedules.find(s => s.id === r.scheduleId);
-          reportsList.innerHTML += `
-            <li>Service: ${schedule.serviceType}, Start: ${r.startTime}, End: ${r.endTime}, Poop: ${r.poop}, Pee: ${r.pee}, Notes: ${r.notes}, GPS: ${r.gpsStart} to ${r.gpsEnd}</li>
-          `;
-        });
-        renderAdminServiceHistory();
-      } catch (err) {
-        console.error('Error rendering admin dashboard:', err);
-        alert('Failed to render admin dashboard');
-      }
-    }
-
-    function renderAdminServiceHistory() {
-      try {
-        const userId = document.getElementById('admin-user-select').value;
-        const historyList = document.getElementById('admin-service-history');
-        historyList.innerHTML = '';
-        if (!userId) return;
-        const data = getData();
-        const schedules = data.schedules.filter(s => s.clientId === userId || s.walkerId === userId);
-        schedules.forEach(s => {
-          const report = data.reports.find(r => r.scheduleId === s.id);
-          const paymentOptions = s.paymentStatus === 'paid'
-            ? '<option value="paid" selected>Paid</option><option value="unpaid">Unpaid</option>'
-            : '<option value="paid">Paid</option><option value="unpaid" selected>Unpaid</option>';
-          historyList.innerHTML += `
-            <li>
-              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: 
-              <select onchange="updatePaymentStatus('${s.id}', this.value)">${paymentOptions}</select>
-              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
-              ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
-            </li>
-          `;
-        });
-      } catch (err) {
-        console.error('Error rendering admin service history:', err);
-        alert('Failed to render service history');
-      }
-    }
-
-    function renderWalker() {
-      try {
-        const data = getData();
-        const schedulesList = document.getElementById('walker-schedules');
-        const availableServicesList = document.getElementById('walker-available-services');
-        const reportSelect = document.getElementById('walker-report-schedule');
-        const profileDisplay = document.getElementById('walker-profile-display');
-        schedulesList.innerHTML = '';
-        availableServicesList.innerHTML = '';
-        reportSelect.innerHTML = '<option value="">Select Schedule</option>';
-
-        const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
-        schedules.forEach(s => {
-          let buttons = '';
-          if (s.status !== 'completed') {
-            buttons = `
-              <input type="text" id="gps-${s.id}" placeholder="Enter mock GPS (e.g., 37.7749,-122.4194)">
-              <button class="btn btn-green" onclick="handleCheckInOut('${s.id}', 'check-in', document.getElementById('gps-${s.id}').value)" ${s.status === 'in-progress' ? 'disabled' : ''}>Check-In</button>
-              <button class="btn btn-yellow" onclick="handleCheckInOut('${s.id}', 'check-out', document.getElementById('gps-${s.id}').value)" ${s.status !== 'in-progress' ? 'disabled' : ''}>Check-Out</button>
-            `;
-          }
-          schedulesList.innerHTML += `
-            <li class="flex-between">
-              <span>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
-              <div>${buttons}</div>
-            </li>
-          `;
-          if (s.status !== 'completed') {
-            reportSelect.innerHTML += `<option value="${s.id}">${s.serviceType} on ${s.date} at ${s.time}</option>`;
-          }
-        });
-
-        const availableSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
-        availableSchedules.forEach(s => {
-          availableServicesList.innerHTML += `
-            <li class="flex-between">
-              <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
-              <button class="btn btn-blue" onclick="acceptService('${s.id}')">Accept</button>
-            </li>
-          `;
-        });
-
-        profileDisplay.innerHTML = `
-          <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
-          <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
-          <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
-        `;
-        document.getElementById('walker-firstname').value = currentUser.firstName;
-        document.getElementById('walker-lastname').value = currentUser.lastName;
-        document.getElementById('walker-street-number').value = currentUser.address.streetNumber;
-        document.getElementById('walker-street-address').value = currentUser.address.streetAddress;
-        document.getElementById('walker-address-line2').value = currentUser.address.addressLine2;
-        document.getElementById('walker-city').value = currentUser.address.city;
-        document.getElementById('walker-state').value = currentUser.address.state;
-        document.getElementById('walker-zip').value = currentUser.address.zip;
-        document.getElementById('walker-contact-text').checked = currentUser.preferredContact.text;
-        document.getElementById('walker-contact-email').checked = currentUser.preferredContact.email;
-        document.getElementById('walker-contact-voice').checked = currentUser.preferredContact.voice;
-
-        const historyList = document.getElementById('walker-service-history');
-        historyList.innerHTML = '';
-        schedules.forEach(s => {
-          const report = data.reports.find(r => r.scheduleId === s.id);
-          historyList.innerHTML += `
-            <li>
-              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
-              ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
-            </li>
-          `;
-        });
-
-        const tabs = document.querySelectorAll('#walker .tab');
-        tabs.forEach(tab => {
-          tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('#walker .tab-content').forEach(c => c.classList.add('hidden'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.remove('hidden');
-          });
-        });
-
-        renderCalendars();
-      } catch (err) {
-        console.error('Error rendering walker dashboard:', err);
-        alert('Failed to render walker dashboard');
-      }
-    }
-
-    function renderClient() {
-      try {
-        const data = getData();
-        const schedulesList = document.getElementById('client-schedules');
-        const profileDisplay = document.getElementById('client-profile-display');
-        schedulesList.innerHTML = '';
-
-        const schedules = data.schedules.filter(s => s.clientId === currentUser.id);
-        schedules.forEach(s => {
-          schedulesList.innerHTML += `<li>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}</li>`;
-        });
-
-        profileDisplay.innerHTML = `
-          <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
-          <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
-          <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
-        `;
-        document.getElementById('client-firstname').value = currentUser.firstName;
-        document.getElementById('client-lastname').value = currentUser.lastName;
-        document.getElementById('client-street-number').value = currentUser.address.streetNumber;
-        document.getElementById('client-street-address').value = currentUser.address.streetAddress;
-        document.getElementById('client-address-line2').value = currentUser.address.addressLine2;
-        document.getElementById('client-city').value = currentUser.address.city;
-        document.getElementById('client-state').value = currentUser.address.state;
-        document.getElementById('client-zip').value = currentUser.address.zip;
-        document.getElementById('client-contact-text').checked = currentUser.preferredContact.text;
-        document.getElementById('client-contact-email').checked = currentUser.preferredContact.email;
-        document.getElementById('client-contact-voice').checked = currentUser.preferredContact.voice;
-
-        const historyList = document.getElementById('client-service-history');
-        historyList.innerHTML = '';
-        schedules.forEach(s => {
-          const report = data.reports.find(r => r.scheduleId === s.id);
-          historyList.innerHTML += `
-            <li>
-              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
-              ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
-            </li>
-          `;
-        });
-
-        const tabs = document.querySelectorAll('#client .tab');
-        tabs.forEach(tab => {
-          tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('#client .tab-content').forEach(c => c.classList.add('hidden'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.remove('hidden');
-          });
-        });
-
-        renderCalendars();
-      } catch (err) {
-        console.error('Error rendering client dashboard:', err);
-        alert('Failed to render client dashboard');
-      }
-    }
-
-    function handleCheckInOut(scheduleId, action, gps) {
-      try {
-        const data = getData();
-        const timestamp = new Date().toISOString();
-        data.checkIns.push({
-          id: `check${data.checkIns.length + 1}`,
-          scheduleId,
-          action,
-          gps,
-          timestamp
-        });
-        const schedule = data.schedules.find(s => s.id === scheduleId);
-        schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
-        const event = calendarData.events.find(e => e.advocateId === schedule.walkerId && e.clientId === schedule.clientId && e.start.includes(schedule.date));
-        if (event) {
-          event
+    // Initialize app
+    initializeData();
+  </script>
+</body>
+</html>

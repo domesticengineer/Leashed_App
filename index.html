@@ -25,7 +25,7 @@
       padding: 20px;
       margin-bottom: 20px;
     }
-    h1, h2 { color: #1f2937; }
+    h1, h2, h3 { color: #1f2937; }
     .btn {
       padding: 10px 20px;
       border-radius: 6px;
@@ -39,7 +39,9 @@
     .btn-red:hover { background: #dc2626; }
     .btn-green { background: #10b981; color: white; }
     .btn-green:hover { background: #059669; }
-    input, select {
+    .btn-yellow { background: #f59e0b; color: white; }
+    .btn-yellow:hover { background: #d97706; }
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -50,11 +52,17 @@
     .error { color: #ef4444; font-size: 14px; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     ul { list-style: none; padding: 0; }
     li { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab { padding: 10px; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { border-bottom-color: #3b82f6; font-weight: bold; }
+    @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
     .hidden { display: none; }
-    #client-calendar { max-height: 200px; overflow: auto; }
+    #client-calendar, #walker-calendar, #admin-calendar { max-height: 200px; overflow: auto; }
+    textarea { resize: vertical; max-height: 100px; }
+    img.map { max-width: 100%; height: auto; }
   </style>
 </head>
 <body>
@@ -71,6 +79,27 @@
         <input id="password" type="password" placeholder="Enter password" required>
       </div>
       <button class="btn btn-blue" onclick="handleLogin()">Login</button>
+      <button class="btn btn-yellow mt-2" onclick="requestPasswordReset()">Reset Password</button>
+    </div>
+  </div>
+  <div id="reset-password" class="container hidden">
+    <div class="card">
+      <h1>Reset Password</h1>
+      <div id="reset-error" class="error hidden"></div>
+      <div>
+        <label for="reset-username">Username</label>
+        <input id="reset-username" type="text" placeholder="Enter username" required>
+      </div>
+      <div>
+        <label for="reset-code">Reset Code</label>
+        <input id="reset-code" type="text" placeholder="Enter reset code" required>
+      </div>
+      <div>
+        <label for="new-password">New Password</label>
+        <input id="new-password" type="password" placeholder="Enter new password" required>
+      </div>
+      <button class="btn btn-blue" onclick="completePasswordReset()">Submit</button>
+      <button class="btn btn-red mt-2" onclick="showSection('login')">Cancel</button>
     </div>
   </div>
   <div id="admin" class="container hidden">
@@ -89,6 +118,34 @@
           <label for="new-lastname">Last Name</label>
           <input id="new-lastname" type="text" placeholder="Last Name" required>
         </div>
+        <div class="grid-2">
+          <div>
+            <label for="new-street-number">Street Number</label>
+            <input id="new-street-number" type="text" placeholder="Street Number" required>
+          </div>
+          <div>
+            <label for="new-street-address">Street Address</label>
+            <input id="new-street-address" type="text" placeholder="Street Address" required>
+          </div>
+        </div>
+        <div>
+          <label for="new-address-line2">2nd Address Line</label>
+          <input id="new-address-line2" type="text" placeholder="Apt, Suite, etc. (optional)">
+        </div>
+        <div class="grid-3">
+          <div>
+            <label for="new-city">City</label>
+            <input id="new-city" type="text" placeholder="City" required>
+          </div>
+          <div>
+            <label for="new-state">State</label>
+            <input id="new-state" type="text" placeholder="State (e.g., CA)" required>
+          </div>
+          <div>
+            <label for="new-zip">Zip Code</label>
+            <input id="new-zip" type="text" placeholder="Zip Code" required>
+          </div>
+        </div>
         <div>
           <label for="new-username">Username</label>
           <input id="new-username" type="text" placeholder="Username" required>
@@ -104,6 +161,14 @@
             <option value="client">Client</option>
           </select>
         </div>
+        <div>
+          <label>Preferred Contact Method</label>
+          <div class="grid-3">
+            <label><input type="checkbox" id="new-contact-text"> Text</label>
+            <label><input type="checkbox" id="new-contact-email"> Email</label>
+            <label><input type="checkbox" id="new-contact-voice"> Voice</label>
+          </div>
+        </div>
         <button class="btn btn-blue" onclick="createUser()">Create User</button>
       </div>
       <div class="card">
@@ -118,6 +183,13 @@
       </div>
     </div>
     <div class="card">
+      <h2>User Service History</h2>
+      <select id="admin-user-select" onchange="renderAdminServiceHistory()">
+        <option value="">Select User</option>
+      </select>
+      <ul id="admin-service-history"></ul>
+    </div>
+    <div class="card">
       <h2>Reports</h2>
       <ul id="admin-reports"></ul>
     </div>
@@ -127,24 +199,108 @@
       <h1>Walker Dashboard</h1>
       <button class="btn btn-red" onclick="handleLogout()">Logout</button>
     </div>
-    <div class="card">
-      <h2>Your Schedules</h2>
-      <div id="walker-calendar" class="max-h-[200px] overflow-auto"></div>
-      <h3>Set Availability</h3>
-      <div>
-        <label for="walker-date">Date</label>
-        <input id="walker-date" type="date" min="2025-07-26">
-      </div>
-      <div>
-        <label for="walker-time">Time</label>
-        <input id="walker-time" type="time">
-      </div>
-      <button class="btn btn-blue" onclick="setAvailability()">Set Availability</button>
-      <ul id="walker-schedules"></ul>
+    <div class="tabs">
+      <div class="tab active" data-tab="walker-schedule">Schedule</div>
+      <div class="tab" data-tab="walker-profile">Profile</div>
+      <div class="tab" data-tab="walker-history">Service History</div>
     </div>
-    <div class="card">
-      <h2>Your Reports</h2>
-      <ul id="walker-reports"></ul>
+    <div id="walker-schedule" class="tab-content">
+      <div class="card">
+        <h2>Your Schedules</h2>
+        <div id="walker-calendar" class="max-h-[200px] overflow-auto"></div>
+        <h3>Set Availability</h3>
+        <div>
+          <label for="walker-date">Date</label>
+          <input id="walker-date" type="date" min="2025-07-26">
+        </div>
+        <div>
+          <label for="walker-time">Time</label>
+          <input id="walker-time" type="time">
+        </div>
+        <button class="btn btn-blue" onclick="setAvailability()">Set Availability</button>
+        <ul id="walker-schedules"></ul>
+      </div>
+      <div class="card">
+        <h2>Submit Report</h2>
+        <select id="walker-report-schedule" class="mb-4">
+          <option value="">Select Schedule</option>
+        </select>
+        <div class="grid-2">
+          <label><input type="checkbox" id="walker-report-poop"> Poop</label>
+          <label><input type="checkbox" id="walker-report-pee"> Pee</label>
+        </div>
+        <div>
+          <label for="walker-report-notes">Notes (max 250 characters)</label>
+          <textarea id="walker-report-notes" maxlength="250" placeholder="Enter walk notes"></textarea>
+        </div>
+        <div>
+          <label for="walker-report-gps">GPS Coordinates</label>
+          <input id="walker-report-gps" type="text" placeholder="e.g., 37.7749,-122.4194" readonly>
+        </div>
+        <button class="btn btn-green" onclick="startGpsTracking()">Start GPS Tracking</button>
+        <button class="btn btn-red" onclick="endGpsTracking()">End GPS Tracking</button>
+        <button class="btn btn-blue mt-2" onclick="submitWalkerReport()">Submit Report</button>
+      </div>
+    </div>
+    <div id="walker-profile" class="tab-content hidden">
+      <div class="card">
+        <h2>Your Profile</h2>
+        <div id="walker-profile-display"></div>
+        <h3>Update Profile</h3>
+        <div>
+          <label for="walker-firstname">First Name</label>
+          <input id="walker-firstname" type="text" placeholder="First Name">
+        </div>
+        <div>
+          <label for="walker-lastname">Last Name</label>
+          <input id="walker-lastname" type="text" placeholder="Last Name">
+        </div>
+        <div class="grid-2">
+          <div>
+            <label for="walker-street-number">Street Number</label>
+            <input id="walker-street-number" type="text" placeholder="Street Number">
+          </div>
+          <div>
+            <label for="walker-street-address">Street Address</label>
+            <input id="walker-street-address" type="text" placeholder="Street Address">
+          </div>
+        </div>
+        <div>
+          <label for="walker-address-line2">2nd Address Line</label>
+          <input id="walker-address-line2" type="text" placeholder="Apt, Suite, etc. (optional)">
+        </div>
+        <div class="grid-3">
+          <div>
+            <label for="walker-city">City</label>
+            <input id="walker-city" type="text" placeholder="City">
+          </div>
+          <div>
+            <label for="walker-state">State</label>
+            <input id="walker-state" type="text" placeholder="State (e.g., CA)">
+          </div>
+          <div>
+            <label for="walker-zip">Zip Code</label>
+            <input id="walker-zip" type="text" placeholder="Zip Code">
+          </div>
+        </div>
+        <div>
+          <label>Preferred Contact Method</label>
+          <div class="grid-3">
+            <label><input type="checkbox" id="walker-contact-text"> Text</label>
+            <label><input type="checkbox" id="walker-contact-email"> Email</label>
+            <label><input type="checkbox" id="walker-contact-voice"> Voice</label>
+          </div>
+        </div>
+        <button class="btn btn-blue" onclick="updateWalkerProfile()">Save Profile</button>
+        <h3>Update Password</h3>
+        <button class="btn btn-yellow" onclick="requestPasswordReset()">Request Password Reset</button>
+      </div>
+    </div>
+    <div id="walker-history" class="tab-content hidden">
+      <div class="card">
+        <h2>Service History</h2>
+        <ul id="walker-service-history"></ul>
+      </div>
     </div>
   </div>
   <div id="client" class="container hidden">
@@ -152,57 +308,146 @@
       <h1>Client Dashboard</h1>
       <button class="btn btn-red" onclick="handleLogout()">Logout</button>
     </div>
-    <div class="card">
-      <h2>Book a Service</h2>
-      <div>
-        <label for="client-service-type">Service Type</label>
-        <select id="client-service-type">
-          <option value="Walk">Walk</option>
-          <option value="Grooming">Grooming</option>
-          <option value="Boarding">Boarding</option>
-          <option value="Training">Training</option>
-        </select>
-      </div>
-      <div>
-        <label for="client-date">Preferred Date</label>
-        <input id="client-date" type="date" min="2025-07-26">
-      </div>
-      <div>
-        <label for="client-time">Preferred Time</label>
-        <input id="client-time" type="time">
-      </div>
-      <button class="btn btn-blue" onclick="submitClientRequest()">Book Service</button>
+    <div class="tabs">
+      <div class="tab active" data-tab="client-schedule">Schedule</div>
+      <div class="tab" data-tab="client-profile">Profile</div>
+      <div class="tab" data-tab="client-history">Service History</div>
     </div>
-    <div class="card">
-      <h2>Your Schedules</h2>
-      <div id="client-calendar" class="max-h-[200px] overflow-auto"></div>
-      <ul id="client-schedules"></ul>
+    <div id="client-schedule" class="tab-content">
+      <div class="card">
+        <h2>Book a Service</h2>
+        <div>
+          <label for="client-service-type">Service Type</label>
+          <select id="client-service-type">
+            <option value="20 Minute Walk">20 Minute Walk</option>
+            <option value="30 Minute Walk">30 Minute Walk</option>
+            <option value="60 Minute Walk">60 Minute Walk</option>
+            <option value="Pet Sitting @ Client’s Home">Pet Sitting @ Client’s Home</option>
+            <option value="Overnight Boarding">Overnight Boarding</option>
+          </select>
+        </div>
+        <div>
+          <label for="client-date">Preferred Date</label>
+          <input id="client-date" type="date" min="2025-07-26">
+        </div>
+        <div>
+          <label for="client-time">Preferred Time</label>
+          <input id="client-time" type="time">
+        </div>
+        <button class="btn btn-blue" onclick="submitClientRequest()">Book Service</button>
+      </div>
+      <div class="card">
+        <h2>Your Schedules</h2>
+        <div id="client-calendar" class="max-h-[200px] overflow-auto"></div>
+        <ul id="client-schedules"></ul>
+      </div>
     </div>
-    <div class="card">
-      <h2>Reports</h2>
-      <ul id="client-reports"></ul>
+    <div id="client-profile" class="tab-content hidden">
+      <div class="card">
+        <h2>Your Profile</h2>
+        <div id="client-profile-display"></div>
+        <h3>Update Profile</h3>
+        <div>
+          <label for="client-firstname">First Name</label>
+          <input id="client-firstname" type="text" placeholder="First Name">
+        </div>
+        <div>
+          <label for="client-lastname">Last Name</label>
+          <input id="client-lastname" type="text" placeholder="Last Name">
+        </div>
+        <div class="grid-2">
+          <div>
+            <label for="client-street-number">Street Number</label>
+            <input id="client-street-number" type="text" placeholder="Street Number">
+          </div>
+          <div>
+            <label for="client-street-address">Street Address</label>
+            <input id="client-street-address" type="text" placeholder="Street Address">
+          </div>
+        </div>
+        <div>
+          <label for="client-address-line2">2nd Address Line</label>
+          <input id="client-address-line2" type="text" placeholder="Apt, Suite, etc. (optional)">
+        </div>
+        <div class="grid-3">
+          <div>
+            <label for="client-city">City</label>
+            <input id="client-city" type="text" placeholder="City">
+          </div>
+          <div>
+            <label for="client-state">State</label>
+            <input id="client-state" type="text" placeholder="State (e.g., CA)">
+          </div>
+          <div>
+            <label for="client-zip">Zip Code</label>
+            <input id="client-zip" type="text" placeholder="Zip Code">
+          </div>
+        </div>
+        <div>
+          <label>Preferred Contact Method</label>
+          <div class="grid-3">
+            <label><input type="checkbox" id="client-contact-text"> Text</label>
+            <label><input type="checkbox" id="client-contact-email"> Email</label>
+            <label><input type="checkbox" id="client-contact-voice"> Voice</label>
+          </div>
+        </div>
+        <button class="btn btn-blue" onclick="updateClientProfile()">Save Profile</button>
+        <h3>Update Password</h3>
+        <button class="btn btn-yellow" onclick="requestPasswordReset()">Request Password Reset</button>
+      </div>
     </div>
-    <div class="card">
-      <button class="btn btn-blue" onclick="alert('Payment functionality not implemented')">Pay Now</button>
+    <div id="client-history" class="tab-content hidden">
+      <div class="card">
+        <h2>Service History</h2>
+        <ul id="client-service-history"></ul>
+      </div>
     </div>
   </div>
   <script>
     const CALENDAR_DATA_URL = 'https://domesticengineer.github.io/Leashed_App_Pro/calendar-data.json';
     let calendarData = { events: [] };
     let currentUser = null;
+    let gpsTracking = { start: null, end: null, active: false };
 
     function initializeData() {
       const defaultData = {
         users: [
-          { id: 'admin1', firstName: 'Admin', lastName: 'User', username: 'admin', password: btoa('admin123'), role: 'admin' },
-          { id: 'walker1', firstName: 'John', lastName: 'Doe', username: 'walker1', password: btoa('walker123'), role: 'walker' },
-          { id: 'client1', firstName: 'Jane', lastName: 'Smith', username: 'client1', password: btoa('client123'), role: 'client' },
+          {
+            id: 'admin1',
+            firstName: 'Admin',
+            lastName: 'User',
+            username: 'admin',
+            password: btoa('admin123'),
+            role: 'admin',
+            address: { streetNumber: '', streetAddress: '', addressLine2: '', city: '', state: '', zip: '' },
+            preferredContact: { text: false, email: false, voice: false }
+          },
+          {
+            id: 'walker1',
+            firstName: 'John',
+            lastName: 'Doe',
+            username: 'walker1',
+            password: btoa('walker123'),
+            role: 'walker',
+            address: { streetNumber: '123', streetAddress: 'Elm St', addressLine2: '', city: 'Anytown', state: 'CA', zip: '12345' },
+            preferredContact: { text: true, email: false, voice: false }
+          },
+          {
+            id: 'client1',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            username: 'client1',
+            password: btoa('client123'),
+            role: 'client',
+            address: { streetNumber: '456', streetAddress: 'Oak St', addressLine2: 'Apt 2B', city: 'Othertown', state: 'NY', zip: '67890' },
+            preferredContact: { text: false, email: true, voice: false }
+          }
         ],
         schedules: [
-          { id: 'sch1', clientId: 'client1', walkerId: 'walker1', pet: 'Buddy', date: '2025-07-25', time: '10:00', status: 'pending' },
+          { id: 'sch1', clientId: 'client1', walkerId: 'walker1', pet: 'Buddy', serviceType: '20 Minute Walk', date: '2025-07-25', time: '10:00', status: 'pending', paymentStatus: 'unpaid' }
         ],
         checkIns: [],
-        reports: [],
+        reports: []
       };
       if (!localStorage.getItem('leashedData')) {
         localStorage.setItem('leashedData', JSON.stringify(defaultData));
@@ -246,6 +491,58 @@
       }).catch(err => console.error('Webhook failed:', err));
     }
 
+    function generateResetCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    function requestPasswordReset() {
+      const username = currentUser ? currentUser.username : document.getElementById('username').value;
+      if (!username) {
+        alert('Please enter a username');
+        return;
+      }
+      const data = getData();
+      const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+      const code = generateResetCode();
+      localStorage.setItem(`resetCode_${user.id}`, JSON.stringify({ code, expires: Date.now() + 10 * 60 * 1000 }));
+      alert(`Reset code generated: ${code} (valid for 10 minutes).`);
+      showSection('reset-password');
+      document.getElementById('reset-username').value = username;
+    }
+
+    function completePasswordReset() {
+      const username = document.getElementById('reset-username').value;
+      const code = document.getElementById('reset-code').value;
+      const newPassword = document.getElementById('new-password').value;
+      const data = getData();
+      const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (!user) {
+        document.getElementById('reset-error').textContent = 'User not found';
+        document.getElementById('reset-error').classList.remove('hidden');
+        return;
+      }
+      const resetData = JSON.parse(localStorage.getItem(`resetCode_${user.id}`) || '{}');
+      if (!resetData.code || resetData.code !== code || Date.now() > resetData.expires) {
+        document.getElementById('reset-error').textContent = 'Invalid or expired reset code';
+        document.getElementById('reset-error').classList.remove('hidden');
+        return;
+      }
+      user.password = btoa(newPassword);
+      saveData(data);
+      localStorage.removeItem(`resetCode_${user.id}`);
+      alert('Password updated successfully');
+      showSection('login');
+    }
+
     function handleLogin() {
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
@@ -260,10 +557,13 @@
         document.getElementById('password').value = '';
         if (user.role === 'admin') {
           showSection('admin');
+          renderAdmin();
         } else if (user.role === 'walker') {
           showSection('walker');
+          renderWalker();
         } else {
           showSection('client');
+          renderClient();
         }
         loadCalendarData();
       } else {
@@ -278,7 +578,7 @@
     }
 
     function showSection(sectionId) {
-      ['login', 'admin', 'walker', 'client'].forEach(id => {
+      ['login', 'reset-password', 'admin', 'walker', 'client'].forEach(id => {
         document.getElementById(id).classList.toggle('hidden', id !== sectionId);
       });
     }
@@ -286,9 +586,18 @@
     function createUser() {
       const firstName = document.getElementById('new-firstname').value;
       const lastName = document.getElementById('new-lastname').value;
+      const streetNumber = document.getElementById('new-street-number').value;
+      const streetAddress = document.getElementById('new-street-address').value;
+      const addressLine2 = document.getElementById('new-address-line2').value;
+      const city = document.getElementById('new-city').value;
+      const state = document.getElementById('new-state').value;
+      const zip = document.getElementById('new-zip').value;
       const username = document.getElementById('new-username').value;
       const password = document.getElementById('new-password').value;
       const role = document.getElementById('new-role').value;
+      const contactText = document.getElementById('new-contact-text').checked;
+      const contactEmail = document.getElementById('new-contact-email').checked;
+      const contactVoice = document.getElementById('new-contact-voice').checked;
       const data = getData();
 
       if (data.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
@@ -300,83 +609,67 @@
         id: `user${data.users.length + 1}`,
         firstName,
         lastName,
+        address: { streetNumber, streetAddress, addressLine2, city, state, zip },
         username,
         password: btoa(password),
-        role
+        role,
+        preferredContact: { text: contactText, email: contactEmail, voice: contactVoice }
       });
 
       saveData(data);
       document.getElementById('new-firstname').value = '';
       document.getElementById('new-lastname').value = '';
+      document.getElementById('new-street-number').value = '';
+      document.getElementById('new-street-address').value = '';
+      document.getElementById('new-address-line2').value = '';
+      document.getElementById('new-city').value = '';
+      document.getElementById('new-state').value = '';
+      document.getElementById('new-zip').value = '';
       document.getElementById('new-username').value = '';
       document.getElementById('new-password').value = '';
+      document.getElementById('new-contact-text').checked = false;
+      document.getElementById('new-contact-email').checked = false;
+      document.getElementById('new-contact-voice').checked = false;
       alert('User created successfully');
       renderAdmin();
     }
 
-    function createSchedule() {
-      const clientId = document.getElementById('schedule-client').value;
-      const walkerId = document.getElementById('schedule-walker').value;
-      const pet = document.getElementById('pet').value;
-      const date = document.getElementById('schedule-date').value;
-      const time = document.getElementById('schedule-time').value;
+    function updateWalkerProfile() {
       const data = getData();
-
-      data.schedules.push({
-        id: `sch${data.schedules.length + 1}`,
-        clientId,
-        walkerId,
-        pet,
-        date,
-        time,
-        status: 'pending'
-      });
-
-      const event = {
-        id: `event${Date.now()}`,
-        title: `Booked: Walk for ${pet}`,
-        start: `${date}T${time}:00`,
-        end: new Date(`${date}T${time}:00`).setHours(new Date(`${date}T${time}:00`).getHours() + 1).toISOString(),
-        advocateId: walkerId,
-        clientId,
-        status: 'booked',
-        public: false,
-      };
-      saveLocalEvent(event);
+      const user = data.users.find(u => u.id === currentUser.id);
+      user.firstName = document.getElementById('walker-firstname').value;
+      user.lastName = document.getElementById('walker-lastname').value;
+      user.address.streetNumber = document.getElementById('walker-street-number').value;
+      user.address.streetAddress = document.getElementById('walker-street-address').value;
+      user.address.addressLine2 = document.getElementById('walker-address-line2').value;
+      user.address.city = document.getElementById('walker-city').value;
+      user.address.state = document.getElementById('walker-state').value;
+      user.address.zip = document.getElementById('walker-zip').value;
+      user.preferredContact.text = document.getElementById('walker-contact-text').checked;
+      user.preferredContact.email = document.getElementById('walker-contact-email').checked;
+      user.preferredContact.voice = document.getElementById('walker-contact-voice').checked;
       saveData(data);
-      document.getElementById('schedule-client').value = '';
-      document.getElementById('schedule-walker').value = '';
-      document.getElementById('pet').value = '';
-      document.getElementById('schedule-date').value = '';
-      document.getElementById('schedule-time').value = '';
-      alert('Schedule created successfully');
-      renderAdmin();
+      alert('Profile updated');
+      renderWalker();
     }
 
-    function handleCheckInOut(scheduleId, action, gps) {
+    function updateClientProfile() {
       const data = getData();
-      const timestamp = new Date().toISOString();
-      data.checkIns.push({
-        id: `check${data.checkIns.length + 1}`,
-        scheduleId,
-        action,
-        gps,
-        timestamp
-      });
-      const schedule = data.schedules.find(s => s.id === scheduleId);
-      schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
-      data.reports.push({
-        id: `rep${data.reports.length + 1}`,
-        scheduleId,
-        text: `Walker ${currentUser.username} ${action} for ${schedule.pet}`,
-        timestamp
-      });
-      const event = calendarData.events.find(e => e.advocateId === schedule.walkerId && e.clientId === schedule.clientId && e.start.includes(schedule.date));
-      if (event) event.status = schedule.status;
-      saveLocalEvent(event);
+      const user = data.users.find(u => u.id === currentUser.id);
+      user.firstName = document.getElementById('client-firstname').value;
+      user.lastName = document.getElementById('client-lastname').value;
+      user.address.streetNumber = document.getElementById('client-street-number').value;
+      user.address.streetAddress = document.getElementById('client-street-address').value;
+      user.address.addressLine2 = document.getElementById('client-address-line2').value;
+      user.address.city = document.getElementById('client-city').value;
+      user.address.state = document.getElementById('client-state').value;
+      user.address.zip = document.getElementById('client-zip').value;
+      user.preferredContact.text = document.getElementById('client-contact-text').checked;
+      user.preferredContact.email = document.getElementById('client-contact-email').checked;
+      user.preferredContact.voice = document.getElementById('client-contact-voice').checked;
       saveData(data);
-      alert(`${action} recorded`);
-      renderWalker();
+      alert('Profile updated');
+      renderClient();
     }
 
     function submitClientRequest() {
@@ -390,6 +683,19 @@
       const start = `${date}T${time}:00`;
       const end = new Date(start);
       end.setHours(end.getHours() + 1);
+      const data = getData();
+      const scheduleId = `sch${data.schedules.length + 1}`;
+      data.schedules.push({
+        id: scheduleId,
+        clientId: currentUser.id,
+        walkerId: null,
+        pet: 'Pet',
+        serviceType,
+        date,
+        time,
+        status: 'pending',
+        paymentStatus: 'unpaid'
+      });
       const event = {
         id: `event${Date.now()}`,
         title: `Requested: ${serviceType}`,
@@ -398,11 +704,12 @@
         advocateId: null,
         clientId: currentUser.id,
         status: 'pending',
-        public: false,
+        public: false
       };
       saveLocalEvent(event);
+      saveData(data);
       alert('Booking submitted! Awaiting confirmation.');
-      document.getElementById('client-service-type').value = 'Walk';
+      document.getElementById('client-service-type').value = '20 Minute Walk';
       document.getElementById('client-date').value = '';
       document.getElementById('client-time').value = '';
       renderClient();
@@ -426,13 +733,129 @@
         advocateId: currentUser.id,
         clientId: null,
         status: 'available',
-        public: true,
+        public: true
       };
       saveLocalEvent(event);
       alert('Availability set');
       document.getElementById('walker-date').value = '';
       document.getElementById('walker-time').value = '';
       renderWalker();
+    }
+
+    function startGpsTracking() {
+      if (gpsTracking.active) {
+        alert('GPS tracking already active');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          gpsTracking.start = `${pos.coords.latitude},${pos.coords.longitude}`;
+          gpsTracking.active = true;
+          document.getElementById('walker-report-gps').value = gpsTracking.start;
+          alert('GPS tracking started');
+        },
+        err => alert('GPS access denied: ' + err.message)
+      );
+    }
+
+    function endGpsTracking() {
+      if (!gpsTracking.active) {
+        alert('No active GPS tracking');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          gpsTracking.end = `${pos.coords.latitude},${pos.coords.longitude}`;
+          gpsTracking.active = false;
+          document.getElementById('walker-report-gps').value = gpsTracking.end;
+          alert('GPS tracking ended');
+        },
+        err => alert('GPS access denied: ' + err.message)
+      );
+    }
+
+    function submitWalkerReport() {
+      const scheduleId = document.getElementById('walker-report-schedule').value;
+      const poop = document.getElementById('walker-report-poop').checked;
+      const pee = document.getElementById('walker-report-pee').checked;
+      const notes = document.getElementById('walker-report-notes').value;
+      const gps = gpsTracking.end || document.getElementById('walker-report-gps').value;
+      if (!scheduleId) {
+        alert('Please select a schedule');
+        return;
+      }
+      const data = getData();
+      const schedule = data.schedules.find(s => s.id === scheduleId);
+      const startTime = new Date().toISOString();
+      const endTime = new Date().toISOString();
+      const staticMapUrl = gpsTracking.start && gpsTracking.end
+        ? `https://staticmap.openstreetmap.de/staticmap.php?center=${gpsTracking.start.split(',')[0]},${gpsTracking.start.split(',')[1]}&zoom=14&size=400x200&path=color:red|weight:5|${gpsTracking.start}|${gpsTracking.end}`
+        : '';
+      const report = {
+        id: `rep${data.reports.length + 1}`,
+        scheduleId,
+        walkerId: currentUser.id,
+        startTime,
+        endTime,
+        poop,
+        pee,
+        notes,
+        gpsStart: gpsTracking.start,
+        gpsEnd: gps,
+        staticMapUrl,
+        timestamp: new Date().toISOString()
+      };
+      data.reports.push(report);
+      schedule.status = 'completed';
+      const event = calendarData.events.find(e => e.clientId === schedule.clientId && e.start.includes(schedule.date));
+      if (event) {
+        event.status = 'booked';
+        event.title = `Booked: ${schedule.serviceType}`;
+        saveLocalEvent(event);
+      }
+      const client = data.users.find(u => u.id === schedule.clientId);
+      const paymentLink = schedule.serviceType === '20 Minute Walk'
+        ? 'https://pay.stayleashed.com/20MinWalk'
+        : schedule.serviceType === '30 Minute Walk'
+        ? 'https://pay.stayleashed.com/30MinWalk'
+        : '';
+      const notification = {
+        clientId: schedule.clientId,
+        serviceType: schedule.serviceType,
+        startTime,
+        endTime,
+        poop,
+        pee,
+        notes,
+        gpsStart: gpsTracking.start,
+        gpsEnd: gps,
+        staticMapUrl,
+        paymentLink,
+        preferredContact: client.preferredContact
+      };
+      fetch('YOUR_ZAPIER_WEBHOOK_URL', {
+        method: 'POST',
+        body: JSON.stringify(notification)
+      }).catch(err => console.error('Webhook failed:', err));
+      saveData(data);
+      gpsTracking = { start: null, end: null, active: false };
+      document.getElementById('walker-report-schedule').value = '';
+      document.getElementById('walker-report-poop').checked = false;
+      document.getElementById('walker-report-pee').checked = false;
+      document.getElementById('walker-report-notes').value = '';
+      document.getElementById('walker-report-gps').value = '';
+      alert('Report submitted');
+      renderWalker();
+    }
+
+    function updatePaymentStatus(scheduleId, status) {
+      const data = getData();
+      const schedule = data.schedules.find(s => s.id === scheduleId);
+      if (schedule) {
+        schedule.paymentStatus = status;
+        saveData(data);
+        renderAdminServiceHistory();
+      }
     }
 
     function exportCalendarData() {
@@ -490,7 +913,7 @@
               localStorage.setItem('calendarEvents', JSON.stringify(calendarData.events));
               calendar.refetchEvents();
             }
-          },
+          }
         });
         calendar.render();
       } else if (currentUser.role === 'walker') {
@@ -502,7 +925,7 @@
           headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
           slotMinTime: '08:00:00',
           slotMaxTime: '20:00:00',
-          height: '200px',
+          height: '200px'
         });
         calendar.render();
       } else {
@@ -514,7 +937,7 @@
           headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
           slotMinTime: '08:00:00',
           slotMaxTime: '20:00:00',
-          height: '200px',
+          height: '200px'
         });
         calendar.render();
       }
@@ -522,31 +945,54 @@
 
     function renderAdmin() {
       const data = getData();
-      const clientSelect = document.getElementById('schedule-client');
-      const walkerSelect = document.getElementById('schedule-walker');
+      const userSelect = document.getElementById('admin-user-select');
       const reportsList = document.getElementById('admin-reports');
-      clientSelect.innerHTML = '<option value="">Select Client</option>';
-      walkerSelect.innerHTML = '<option value="">Select Walker</option>';
+      userSelect.innerHTML = '<option value="">Select User</option>';
       reportsList.innerHTML = '';
 
-      data.users.filter(u => u.role === 'client').forEach(u => {
-        clientSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
-      });
-      data.users.filter(u => u.role === 'walker').forEach(u => {
-        walkerSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
+      data.users.forEach(u => {
+        userSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
       });
 
       data.reports.forEach(r => {
-        reportsList.innerHTML += `<li>${r.text} (Time: ${r.timestamp})</li>`;
+        const schedule = data.schedules.find(s => s.id === r.scheduleId);
+        reportsList.innerHTML += `
+          <li>Service: ${schedule.serviceType}, Start: ${r.startTime}, End: ${r.endTime}, Poop: ${r.poop}, Pee: ${r.pee}, Notes: ${r.notes}, GPS: ${r.gpsStart} to ${r.gpsEnd}</li>
+        `;
+      });
+      renderAdminServiceHistory();
+    }
+
+    function renderAdminServiceHistory() {
+      const userId = document.getElementById('admin-user-select').value;
+      const historyList = document.getElementById('admin-service-history');
+      historyList.innerHTML = '';
+      if (!userId) return;
+      const data = getData();
+      const schedules = data.schedules.filter(s => s.clientId === userId || s.walkerId === userId);
+      schedules.forEach(s => {
+        const report = data.reports.find(r => r.scheduleId === s.id);
+        const paymentOptions = s.paymentStatus === 'paid'
+          ? '<option value="paid" selected>Paid</option><option value="unpaid">Unpaid</option>'
+          : '<option value="paid">Paid</option><option value="unpaid" selected>Unpaid</option>';
+        historyList.innerHTML += `
+          <li>
+            Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: 
+            <select onchange="updatePaymentStatus('${s.id}', this.value)">${paymentOptions}</select>
+            ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+            ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
+          </li>
+        `;
       });
     }
 
     function renderWalker() {
       const data = getData();
       const schedulesList = document.getElementById('walker-schedules');
-      const reportsList = document.getElementById('walker-reports');
+      const reportSelect = document.getElementById('walker-report-schedule');
+      const profileDisplay = document.getElementById('walker-profile-display');
       schedulesList.innerHTML = '';
-      reportsList.innerHTML = '';
+      reportSelect.innerHTML = '<option value="">Select Schedule</option>';
 
       const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
       schedules.forEach(s => {
@@ -560,34 +1006,132 @@
         }
         schedulesList.innerHTML += `
           <li class="flex-between">
-            <span>Pet: ${s.pet}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
+            <span>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
             <div>${buttons}</div>
+          </li>
+        `;
+        if (s.status !== 'completed') {
+          reportSelect.innerHTML += `<option value="${s.id}">${s.serviceType} on ${s.date} at ${s.time}</option>`;
+        }
+      });
+
+      profileDisplay.innerHTML = `
+        <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
+        <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
+        <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
+      `;
+      document.getElementById('walker-firstname').value = currentUser.firstName;
+      document.getElementById('walker-lastname').value = currentUser.lastName;
+      document.getElementById('walker-street-number').value = currentUser.address.streetNumber;
+      document.getElementById('walker-street-address').value = currentUser.address.streetAddress;
+      document.getElementById('walker-address-line2').value = currentUser.address.addressLine2;
+      document.getElementById('walker-city').value = currentUser.address.city;
+      document.getElementById('walker-state').value = currentUser.address.state;
+      document.getElementById('walker-zip').value = currentUser.address.zip;
+      document.getElementById('walker-contact-text').checked = currentUser.preferredContact.text;
+      document.getElementById('walker-contact-email').checked = currentUser.preferredContact.email;
+      document.getElementById('walker-contact-voice').checked = currentUser.preferredContact.voice;
+
+      const historyList = document.getElementById('walker-service-history');
+      historyList.innerHTML = '';
+      schedules.forEach(s => {
+        const report = data.reports.find(r => r.scheduleId === s.id);
+        historyList.innerHTML += `
+          <li>
+            Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
+            ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+            ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
           </li>
         `;
       });
 
-      data.reports.filter(r => schedules.some(s => s.id === r.scheduleId)).forEach(r => {
-        reportsList.innerHTML += `<li>${r.text} (Time: ${r.timestamp})</li>`;
+      const tabs = document.querySelectorAll('#walker .tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('#walker .tab-content').forEach(c => c.classList.add('hidden'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.remove('hidden');
+        });
       });
+
       renderCalendars();
     }
 
     function renderClient() {
       const data = getData();
       const schedulesList = document.getElementById('client-schedules');
-      const reportsList = document.getElementById('client-reports');
+      const profileDisplay = document.getElementById('client-profile-display');
       schedulesList.innerHTML = '';
-      reportsList.innerHTML = '';
 
       const schedules = data.schedules.filter(s => s.clientId === currentUser.id);
       schedules.forEach(s => {
-        schedulesList.innerHTML += `<li>Pet: ${s.pet}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</li>`;
+        schedulesList.innerHTML += `<li>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}</li>`;
       });
 
-      data.reports.filter(r => schedules.some(s => s.id === r.scheduleId)).forEach(r => {
-        reportsList.innerHTML += `<li>${r.text} (Time: ${r.timestamp})</li>`;
+      profileDisplay.innerHTML = `
+        <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
+        <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
+        <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
+      `;
+      document.getElementById('client-firstname').value = currentUser.firstName;
+      document.getElementById('client-lastname').value = currentUser.lastName;
+      document.getElementById('client-street-number').value = currentUser.address.streetNumber;
+      document.getElementById('client-street-address').value = currentUser.address.streetAddress;
+      document.getElementById('client-address-line2').value = currentUser.address.addressLine2;
+      document.getElementById('client-city').value = currentUser.address.city;
+      document.getElementById('client-state').value = currentUser.address.state;
+      document.getElementById('client-zip').value = currentUser.address.zip;
+      document.getElementById('client-contact-text').checked = currentUser.preferredContact.text;
+      document.getElementById('client-contact-email').checked = currentUser.preferredContact.email;
+      document.getElementById('client-contact-voice').checked = currentUser.preferredContact.voice;
+
+      const historyList = document.getElementById('client-service-history');
+      historyList.innerHTML = '';
+      schedules.forEach(s => {
+        const report = data.reports.find(r => r.scheduleId === s.id);
+        historyList.innerHTML += `
+          <li>
+            Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
+            ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+            ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
+          </li>
+        `;
       });
+
+      const tabs = document.querySelectorAll('#client .tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('#client .tab-content').forEach(c => c.classList.add('hidden'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.remove('hidden');
+        });
+      });
+
       renderCalendars();
+    }
+
+    function handleCheckInOut(scheduleId, action, gps) {
+      const data = getData();
+      const timestamp = new Date().toISOString();
+      data.checkIns.push({
+        id: `check${data.checkIns.length + 1}`,
+        scheduleId,
+        action,
+        gps,
+        timestamp
+      });
+      const schedule = data.schedules.find(s => s.id === scheduleId);
+      schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
+      const event = calendarData.events.find(e => e.advocateId === schedule.walkerId && e.clientId === schedule.clientId && e.start.includes(schedule.date));
+      if (event) {
+        event.status = schedule.status === 'completed' ? 'booked' : schedule.status;
+        saveLocalEvent(event);
+      }
+      saveData(data);
+      alert(`${action} recorded`);
+      renderWalker();
     }
 
     initializeData();

@@ -441,90 +441,116 @@
     let gpsTracking = { start: null, end: null, active: false };
 
     function initializeData() {
-      const defaultData = {
-        users: [
-          {
-            id: 'admin1',
-            firstName: 'Admin',
-            lastName: 'User',
-            username: 'admin',
-            password: btoa('admin123'),
-            role: 'admin',
-            address: { streetNumber: '', streetAddress: '', addressLine2: '', city: '', state: '', zip: '' },
-            preferredContact: { text: false, email: false, voice: false }
-          },
-          {
-            id: 'walker1',
-            firstName: 'John',
-            lastName: 'Doe',
-            username: 'walker1',
-            password: btoa('walker123'),
-            role: 'walker',
-            address: { streetNumber: '123', streetAddress: 'Elm St', addressLine2: '', city: 'Anytown', state: 'CA', zip: '12345' },
-            preferredContact: { text: true, email: false, voice: false }
-          },
-          {
-            id: 'client1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            username: 'client1',
-            password: btoa('client123'),
-            role: 'client',
-            address: { streetNumber: '456', streetAddress: 'Oak St', addressLine2: 'Apt 2B', city: 'Othertown', state: 'NY', zip: '67890' },
-            preferredContact: { text: false, email: true, voice: false }
-          }
-        ],
-        schedules: [
-          { id: 'sch1', clientId: 'client1', walkerId: 'walker1', pet: 'Buddy', serviceType: '20 Minute Walk', date: '2025-07-25', time: '10:00', status: 'pending', paymentStatus: 'unpaid' }
-        ],
-        checkIns: [],
-        reports: []
-      };
-      if (!localStorage.getItem('leashedData')) {
-        localStorage.setItem('leashedData', JSON.stringify(defaultData));
-      }
-      if (!localStorage.getItem('calendarEvents')) {
-        localStorage.setItem('calendarEvents', JSON.stringify([]));
+      try {
+        const defaultData = {
+          users: [
+            {
+              id: 'admin1',
+              firstName: 'Admin',
+              lastName: 'User',
+              username: 'admin',
+              password: btoa('admin123'),
+              role: 'admin',
+              address: { streetNumber: '', streetAddress: '', addressLine2: '', city: '', state: '', zip: '' },
+              preferredContact: { text: false, email: false, voice: false }
+            },
+            {
+              id: 'walker1',
+              firstName: 'John',
+              lastName: 'Doe',
+              username: 'walker1',
+              password: btoa('walker123'),
+              role: 'walker',
+              address: { streetNumber: '123', streetAddress: 'Elm St', addressLine2: '', city: 'Anytown', state: 'CA', zip: '12345' },
+              preferredContact: { text: true, email: false, voice: false }
+            },
+            {
+              id: 'client1',
+              firstName: 'Jane',
+              lastName: 'Smith',
+              username: 'client1',
+              password: btoa('client123'),
+              role: 'client',
+              address: { streetNumber: '456', streetAddress: 'Oak St', addressLine2: 'Apt 2B', city: 'Othertown', state: 'NY', zip: '67890' },
+              preferredContact: { text: false, email: true, voice: false }
+            }
+          ],
+          schedules: [
+            { id: 'sch1', clientId: 'client1', walkerId: 'walker1', pet: 'Buddy', serviceType: '20 Minute Walk', date: '2025-07-25', time: '10:00', status: 'pending', paymentStatus: 'unpaid' }
+          ],
+          checkIns: [],
+          reports: []
+        };
+        if (!localStorage.getItem('leashedData')) {
+          localStorage.setItem('leashedData', JSON.stringify(defaultData));
+          console.log('Initialized default data');
+        }
+        if (!localStorage.getItem('calendarEvents')) {
+          localStorage.setItem('calendarEvents', JSON.stringify([]));
+          console.log('Initialized calendar events');
+        }
+      } catch (err) {
+        console.error('Error initializing data:', err);
+        alert('Failed to initialize app data. Please clear browser storage and try again.');
       }
     }
 
     function getData() {
-      return JSON.parse(localStorage.getItem('leashedData') || '{}');
+      try {
+        return JSON.parse(localStorage.getItem('leashedData') || '{}');
+      } catch (err) {
+        console.error('Error parsing leashedData:', err);
+        return { users: [], schedules: [], checkIns: [], reports: [] };
+      }
     }
 
     function saveData(data) {
-      localStorage.setItem('leashedData', JSON.stringify(data));
+      try {
+        localStorage.setItem('leashedData', JSON.stringify(data));
+      } catch (err) {
+        console.error('Error saving data:', err);
+        alert('Failed to save data. Check browser storage.');
+      }
     }
 
     function loadCalendarData() {
-      fetch(CALENDAR_DATA_URL)
-        .then(response => response.json())
-        .then(data => {
-          calendarData = data;
-          const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-          calendarData.events = [...calendarData.events, ...localEvents];
-          renderCalendars();
-        })
-        .catch(() => {
-          calendarData.events = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-          renderCalendars();
-        });
+      try {
+        fetch(CALENDAR_DATA_URL)
+          .then(response => response.json())
+          .then(data => {
+            calendarData = data;
+            const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
+            calendarData.events = [...calendarData.events, ...localEvents];
+            renderCalendars();
+          })
+          .catch(() => {
+            console.warn('Failed to fetch calendar data, using local events');
+            calendarData.events = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
+            renderCalendars();
+          });
+      } catch (err) {
+        console.error('Error loading calendar data:', err);
+      }
     }
 
     function saveLocalEvent(event) {
-      const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-      const existingEventIndex = localEvents.findIndex(e => e.id === event.id);
-      if (existingEventIndex !== -1) {
-        localEvents[existingEventIndex] = event;
-      } else {
-        localEvents.push(event);
+      try {
+        const localEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
+        const existingEventIndex = localEvents.findIndex(e => e.id === event.id);
+        if (existingEventIndex !== -1) {
+          localEvents[existingEventIndex] = event;
+        } else {
+          localEvents.push(event);
+        }
+        localStorage.setItem('calendarEvents', JSON.stringify(localEvents));
+        console.log(`Saved event: ${event.status} ${event.id} for ${event.start}`);
+        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
+          method: 'POST',
+          body: JSON.stringify(event)
+        }).catch(err => console.error('Webhook failed:', err));
+      } catch (err) {
+        console.error('Error saving local event:', err);
       }
-      localStorage.setItem('calendarEvents', JSON.stringify(localEvents));
-      console.log(`Reminder trigger: ${event.status} ${event.id} for ${event.start}`);
-      fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-        method: 'POST',
-        body: JSON.stringify(event)
-      }).catch(err => console.error('Webhook failed:', err));
     }
 
     function generateResetCode() {
@@ -556,54 +582,75 @@
     }
 
     function completePasswordReset() {
-      const username = document.getElementById('reset-username').value;
-      const code = document.getElementById('reset-code').value;
-      const newPassword = document.getElementById('new-password').value;
-      const data = getData();
-      const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-      if (!user) {
-        document.getElementById('reset-error').textContent = 'User not found';
+      try {
+        const username = document.getElementById('reset-username').value;
+        const code = document.getElementById('reset-code').value;
+        const newPassword = document.getElementById('new-password').value;
+        const data = getData();
+        const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+        if (!user) {
+          document.getElementById('reset-error').textContent = 'User not found';
+          document.getElementById('reset-error').classList.remove('hidden');
+          return;
+        }
+        const resetData = JSON.parse(localStorage.getItem(`resetCode_${user.id}`) || '{}');
+        if (!resetData.code || resetData.code !== code || Date.now() > resetData.expires) {
+          document.getElementById('reset-error').textContent = 'Invalid or expired reset code';
+          document.getElementById('reset-error').classList.remove('hidden');
+          return;
+        }
+        user.password = btoa(newPassword);
+        saveData(data);
+        localStorage.removeItem(`resetCode_${user.id}`);
+        alert('Password updated successfully');
+        showSection('login');
+      } catch (err) {
+        console.error('Error resetting password:', err);
+        document.getElementById('reset-error').textContent = 'Error resetting password';
         document.getElementById('reset-error').classList.remove('hidden');
-        return;
       }
-      const resetData = JSON.parse(localStorage.getItem(`resetCode_${user.id}`) || '{}');
-      if (!resetData.code || resetData.code !== code || Date.now() > resetData.expires) {
-        document.getElementById('reset-error').textContent = 'Invalid or expired reset code';
-        document.getElementById('reset-error').classList.remove('hidden');
-        return;
-      }
-      user.password = btoa(newPassword);
-      saveData(data);
-      localStorage.removeItem(`resetCode_${user.id}`);
-      alert('Password updated successfully');
-      showSection('login');
     }
 
     function handleLogin() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const data = getData();
-      const user = data.users.find(
-        u => u.username.toLowerCase() === username.toLowerCase() && u.password === btoa(password)
-      );
-      if (user) {
-        currentUser = user;
-        document.getElementById('login-error').classList.add('hidden');
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';
-        if (user.role === 'admin') {
-          showSection('admin');
-          renderAdmin();
-        } else if (user.role === 'walker') {
-          showSection('walker');
-          renderWalker();
-        } else {
-          showSection('client');
-          renderClient();
+      try {
+        console.log('Login attempt started');
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        if (!username || !password) {
+          document.getElementById('login-error').textContent = 'Please enter username and password';
+          document.getElementById('login-error').classList.remove('hidden');
+          return;
         }
-        loadCalendarData();
-      } else {
-        document.getElementById('login-error').textContent = 'Invalid username or password';
+        const data = getData();
+        console.log('Users in storage:', data.users.map(u => u.username));
+        const user = data.users.find(
+          u => u.username.toLowerCase() === username.toLowerCase() && u.password === btoa(password)
+        );
+        if (user) {
+          currentUser = user;
+          document.getElementById('login-error').classList.add('hidden');
+          document.getElementById('username').value = '';
+          document.getElementById('password').value = '';
+          console.log(`Login successful for ${user.username} (${user.role})`);
+          if (user.role === 'admin') {
+            showSection('admin');
+            renderAdmin();
+          } else if (user.role === 'walker') {
+            showSection('walker');
+            renderWalker();
+          } else {
+            showSection('client');
+            renderClient();
+          }
+          loadCalendarData();
+        } else {
+          document.getElementById('login-error').textContent = 'Invalid username or password';
+          document.getElementById('login-error').classList.remove('hidden');
+          console.log('Login failed: Invalid credentials');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        document.getElementById('login-error').textContent = 'Login failed. Check console for details.';
         document.getElementById('login-error').classList.remove('hidden');
       }
     }
@@ -615,412 +662,473 @@
 
     function showSection(sectionId) {
       ['login', 'reset-password', 'admin', 'walker', 'client'].forEach(id => {
-        document.getElementById(id).classList.toggle('hidden', id !== sectionId);
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('hidden', id !== sectionId);
       });
     }
 
     function createUser() {
-      const firstName = document.getElementById('new-firstname').value;
-      const lastName = document.getElementById('new-lastname').value;
-      const streetNumber = document.getElementById('new-street-number').value;
-      const streetAddress = document.getElementById('new-street-address').value;
-      const addressLine2 = document.getElementById('new-address-line2').value;
-      const city = document.getElementById('new-city').value;
-      const state = document.getElementById('new-state').value;
-      const zip = document.getElementById('new-zip').value;
-      const username = document.getElementById('new-username').value;
-      const password = document.getElementById('new-password').value;
-      const role = document.getElementById('new-role').value;
-      const contactText = document.getElementById('new-contact-text').checked;
-      const contactEmail = document.getElementById('new-contact-email').checked;
-      const contactVoice = document.getElementById('new-contact-voice').checked;
-      const data = getData();
+      try {
+        const firstName = document.getElementById('new-firstname').value;
+        const lastName = document.getElementById('new-lastname').value;
+        const streetNumber = document.getElementById('new-street-number').value;
+        const streetAddress = document.getElementById('new-street-address').value;
+        const addressLine2 = document.getElementById('new-address-line2').value;
+        const city = document.getElementById('new-city').value;
+        const state = document.getElementById('new-state').value;
+        const zip = document.getElementById('new-zip').value;
+        const username = document.getElementById('new-username').value;
+        const password = document.getElementById('new-password').value;
+        const role = document.getElementById('new-role').value;
+        const contactText = document.getElementById('new-contact-text').checked;
+        const contactEmail = document.getElementById('new-contact-email').checked;
+        const contactVoice = document.getElementById('new-contact-voice').checked;
+        const data = getData();
 
-      if (data.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-        alert('Username already exists');
-        return;
+        if (data.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+          alert('Username already exists');
+          return;
+        }
+
+        data.users.push({
+          id: `user${data.users.length + 1}`,
+          firstName,
+          lastName,
+          address: { streetNumber, streetAddress, addressLine2, city, state, zip },
+          username,
+          password: btoa(password),
+          role,
+          preferredContact: { text: contactText, email: contactEmail, voice: contactVoice }
+        });
+
+        saveData(data);
+        document.getElementById('new-firstname').value = '';
+        document.getElementById('new-lastname').value = '';
+        document.getElementById('new-street-number').value = '';
+        document.getElementById('new-street-address').value = '';
+        document.getElementById('new-address-line2').value = '';
+        document.getElementById('new-city').value = '';
+        document.getElementById('new-state').value = '';
+        document.getElementById('new-zip').value = '';
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('new-contact-text').checked = false;
+        document.getElementById('new-contact-email').checked = false;
+        document.getElementById('new-contact-voice').checked = false;
+        alert('User created successfully');
+        renderAdmin();
+      } catch (err) {
+        console.error('Error creating user:', err);
+        alert('Failed to create user');
       }
-
-      data.users.push({
-        id: `user${data.users.length + 1}`,
-        firstName,
-        lastName,
-        address: { streetNumber, streetAddress, addressLine2, city, state, zip },
-        username,
-        password: btoa(password),
-        role,
-        preferredContact: { text: contactText, email: contactEmail, voice: contactVoice }
-      });
-
-      saveData(data);
-      document.getElementById('new-firstname').value = '';
-      document.getElementById('new-lastname').value = '';
-      document.getElementById('new-street-number').value = '';
-      document.getElementById('new-street-address').value = '';
-      document.getElementById('new-address-line2').value = '';
-      document.getElementById('new-city').value = '';
-      document.getElementById('new-state').value = '';
-      document.getElementById('new-zip').value = '';
-      document.getElementById('new-username').value = '';
-      document.getElementById('new-password').value = '';
-      document.getElementById('new-contact-text').checked = false;
-      document.getElementById('new-contact-email').checked = false;
-      document.getElementById('new-contact-voice').checked = false;
-      alert('User created successfully');
-      renderAdmin();
     }
 
     function updateWalkerProfile() {
-      const data = getData();
-      const user = data.users.find(u => u.id === currentUser.id);
-      user.firstName = document.getElementById('walker-firstname').value;
-      user.lastName = document.getElementById('walker-lastname').value;
-      user.address.streetNumber = document.getElementById('walker-street-number').value;
-      user.address.streetAddress = document.getElementById('walker-street-address').value;
-      user.address.addressLine2 = document.getElementById('walker-address-line2').value;
-      user.address.city = document.getElementById('walker-city').value;
-      user.address.state = document.getElementById('walker-state').value;
-      user.address.zip = document.getElementById('walker-zip').value;
-      user.preferredContact.text = document.getElementById('walker-contact-text').checked;
-      user.preferredContact.email = document.getElementById('walker-contact-email').checked;
-      user.preferredContact.voice = document.getElementById('walker-contact-voice').checked;
-      saveData(data);
-      alert('Profile updated');
-      renderWalker();
+      try {
+        const data = getData();
+        const user = data.users.find(u => u.id === currentUser.id);
+        user.firstName = document.getElementById('walker-firstname').value;
+        user.lastName = document.getElementById('walker-lastname').value;
+        user.address.streetNumber = document.getElementById('walker-street-number').value;
+        user.address.streetAddress = document.getElementById('walker-street-address').value;
+        user.address.addressLine2 = document.getElementById('walker-address-line2').value;
+        user.address.city = document.getElementById('walker-city').value;
+        user.address.state = document.getElementById('walker-state').value;
+        user.address.zip = document.getElementById('walker-zip').value;
+        user.preferredContact.text = document.getElementById('walker-contact-text').checked;
+        user.preferredContact.email = document.getElementById('walker-contact-email').checked;
+        user.preferredContact.voice = document.getElementById('walker-contact-voice').checked;
+        saveData(data);
+        alert('Profile updated');
+        renderWalker();
+      } catch (err) {
+        console.error('Error updating walker profile:', err);
+        alert('Failed to update profile');
+      }
     }
 
     function updateClientProfile() {
-      const data = getData();
-      const user = data.users.find(u => u.id === currentUser.id);
-      user.firstName = document.getElementById('client-firstname').value;
-      user.lastName = document.getElementById('client-lastname').value;
-      user.address.streetNumber = document.getElementById('client-street-number').value;
-      user.address.streetAddress = document.getElementById('client-street-address').value;
-      user.address.addressLine2 = document.getElementById('client-address-line2').value;
-      user.address.city = document.getElementById('client-city').value;
-      user.address.state = document.getElementById('client-state').value;
-      user.address.zip = document.getElementById('client-zip').value;
-      user.preferredContact.text = document.getElementById('client-contact-text').checked;
-      user.preferredContact.email = document.getElementById('client-contact-email').checked;
-      user.preferredContact.voice = document.getElementById('client-contact-voice').checked;
-      saveData(data);
-      alert('Profile updated');
-      renderClient();
+      try {
+        const data = getData();
+        const user = data.users.find(u => u.id === currentUser.id);
+        user.firstName = document.getElementById('client-firstname').value;
+        user.lastName = document.getElementById('client-lastname').value;
+        user.address.streetNumber = document.getElementById('client-street-number').value;
+        user.address.streetAddress = document.getElementById('client-street-address').value;
+        user.address.addressLine2 = document.getElementById('client-address-line2').value;
+        user.address.city = document.getElementById('client-city').value;
+        user.address.state = document.getElementById('client-state').value;
+        user.address.zip = document.getElementById('client-zip').value;
+        user.preferredContact.text = document.getElementById('client-contact-text').checked;
+        user.preferredContact.email = document.getElementById('client-contact-email').checked;
+        user.preferredContact.voice = document.getElementById('client-contact-voice').checked;
+        saveData(data);
+        alert('Profile updated');
+        renderClient();
+      } catch (err) {
+        console.error('Error updating client profile:', err);
+        alert('Failed to update profile');
+      }
     }
 
     function submitClientRequest() {
-      const serviceType = document.getElementById('client-service-type').value;
-      const date = document.getElementById('client-date').value;
-      const time = document.getElementById('client-time').value;
-      if (!date || !time) {
-        alert('Please select a date and time');
-        return;
-      }
-      const start = `${date}T${time}:00`;
-      const end = new Date(start);
-      end.setHours(end.getHours() + 1);
-      const data = getData();
-      const scheduleId = `sch${data.schedules.length + 1}`;
-      data.schedules.push({
-        id: scheduleId,
-        clientId: currentUser.id,
-        walkerId: null,
-        pet: 'Pet',
-        serviceType,
-        date,
-        time,
-        status: 'pending',
-        paymentStatus: 'unpaid'
-      });
-      const event = {
-        id: `event${Date.now()}`,
-        title: `Requested: ${serviceType}`,
-        start,
-        end: end.toISOString(),
-        advocateId: null,
-        clientId: currentUser.id,
-        status: 'pending',
-        public: false
-      };
-      saveLocalEvent(event);
-      const walkers = data.users.filter(u => u.role === 'walker');
-      walkers.forEach(walker => {
-        const notification = {
-          walkerId: walker.id,
-          scheduleId,
+      try {
+        const serviceType = document.getElementById('client-service-type').value;
+        const date = document.getElementById('client-date').value;
+        const time = document.getElementById('client-time').value;
+        if (!date || !time) {
+          alert('Please select a date and time');
+          return;
+        }
+        const start = `${date}T${time}:00`;
+        const end = new Date(start);
+        end.setHours(end.getHours() + 1);
+        const data = getData();
+        const scheduleId = `sch${data.schedules.length + 1}`;
+        data.schedules.push({
+          id: scheduleId,
+          clientId: currentUser.id,
+          walkerId: null,
+          pet: 'Pet',
           serviceType,
           date,
           time,
+          status: 'pending',
+          paymentStatus: 'unpaid'
+        });
+        const event = {
+          id: `event${Date.now()}`,
+          title: `Requested: ${serviceType}`,
+          start,
+          end: end.toISOString(),
+          advocateId: null,
           clientId: currentUser.id,
+          status: 'pending',
+          public: true
+        };
+        saveLocalEvent(event);
+        const walkers = data.users.filter(u => u.role === 'walker');
+        walkers.forEach(walker => {
+          const notification = {
+            walkerId: walker.id,
+            scheduleId,
+            serviceType,
+            date,
+            time,
+            clientId: currentUser.id,
+            preferredContact: walker.preferredContact
+          };
+          fetch('YOUR_ZAPIER_WEBHOOK_URL', {
+            method: 'POST',
+            body: JSON.stringify(notification)
+          }).catch(err => console.error('Webhook failed:', err));
+        });
+        saveData(data);
+        alert('Booking submitted! Walkers notified.');
+        document.getElementById('client-service-type').value = '20 Minute Walk';
+        document.getElementById('client-date').value = '';
+        document.getElementById('client-time').value = '';
+        renderClient();
+      } catch (err) {
+        console.error('Error submitting client request:', err);
+        alert('Failed to submit booking');
+      }
+    }
+
+    function submitWalkerBooking() {
+      try {
+        const serviceType = document.getElementById('walker-service-type').value;
+        const date = document.getElementById('walker-book-date').value;
+        const time = document.getElementById('walker-book-time').value;
+        if (!date || !time) {
+          alert('Please select a date and time');
+          return;
+        }
+        const start = `${date}T${time}:00`;
+        const end = new Date(start);
+        end.setHours(end.getHours() + 1);
+        const data = getData();
+        const scheduleId = `sch${data.schedules.length + 1}`;
+        data.schedules.push({
+          id: scheduleId,
+          clientId: null,
+          walkerId: currentUser.id,
+          pet: 'TBD',
+          serviceType,
+          date,
+          time,
+          status: 'pending',
+          paymentStatus: 'unpaid'
+        });
+        const event = {
+          id: `event${Date.now()}`,
+          title: `Requested: ${serviceType}`,
+          start,
+          end: end.toISOString(),
+          advocateId: currentUser.id,
+          clientId: null,
+          status: 'pending',
+          public: false
+        };
+        saveLocalEvent(event);
+        saveData(data);
+        alert('Booking submitted! Awaiting admin assignment.');
+        document.getElementById('walker-service-type').value = '20 Minute Walk';
+        document.getElementById('walker-book-date').value = '';
+        document.getElementById('walker-book-time').value = '';
+        renderWalker();
+      } catch (err) {
+        console.error('Error submitting walker booking:', err);
+        alert('Failed to submit booking');
+      }
+    }
+
+    function acceptService(scheduleId) {
+      try {
+        const data = getData();
+        const schedule = data.schedules.find(s => s.id === scheduleId);
+        if (!schedule) {
+          alert('Schedule not found');
+          return;
+        }
+        schedule.walkerId = currentUser.id;
+        schedule.status = 'booked';
+        const event = calendarData.events.find(e => e.id === schedule.id || (e.clientId === schedule.clientId && e.start.includes(schedule.date)));
+        if (event) {
+          event.advocateId = currentUser.id;
+          event.status = 'booked';
+          event.title = `Booked: ${schedule.serviceType}`;
+          saveLocalEvent(event);
+        }
+        saveData(data);
+        const notification = {
+          walkerId: currentUser.id,
+          scheduleId,
+          serviceType: schedule.serviceType,
+          date: schedule.date,
+          time: schedule.time,
+          clientId: schedule.clientId,
+          status: 'assigned',
+          preferredContact: currentUser.preferredContact
+        };
+        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
+          method: 'POST',
+          body: JSON.stringify(notification)
+        }).catch(err => console.error('Webhook failed:', err));
+        alert('Service accepted');
+        renderWalker();
+      } catch (err) {
+        console.error('Error accepting service:', err);
+        alert('Failed to accept service');
+      }
+    }
+
+    function assignService(scheduleId, walkerId) {
+      try {
+        const data = getData();
+        const schedule = data.schedules.find(s => s.id === scheduleId);
+        if (!schedule) {
+          alert('Schedule not found');
+          return;
+        }
+        schedule.walkerId = walkerId;
+        schedule.status = 'booked';
+        const event = calendarData.events.find(e => e.id === schedule.id || (e.clientId === schedule.clientId && e.start.includes(schedule.date)));
+        if (event) {
+          event.advocateId = walkerId;
+          event.status = 'booked';
+          event.title = `Booked: ${schedule.serviceType}`;
+          saveLocalEvent(event);
+        }
+        const walker = data.users.find(u => u.id === walkerId);
+        const notification = {
+          walkerId,
+          scheduleId,
+          serviceType: schedule.serviceType,
+          date: schedule.date,
+          time: schedule.time,
+          clientId: schedule.clientId,
+          status: 'assigned',
           preferredContact: walker.preferredContact
         };
         fetch('YOUR_ZAPIER_WEBHOOK_URL', {
           method: 'POST',
           body: JSON.stringify(notification)
         }).catch(err => console.error('Webhook failed:', err));
-      });
-      saveData(data);
-      alert('Booking submitted! Walkers notified.');
-      document.getElementById('client-service-type').value = '20 Minute Walk';
-      document.getElementById('client-date').value = '';
-      document.getElementById('client-time').value = '';
-      renderClient();
-    }
-
-    function submitWalkerBooking() {
-      const serviceType = document.getElementById('walker-service-type').value;
-      const date = document.getElementById('walker-book-date').value;
-      const time = document.getElementById('walker-book-time').value;
-      if (!date || !time) {
-        alert('Please select a date and time');
-        return;
+        saveData(data);
+        alert('Service assigned');
+        renderAdmin();
+      } catch (err) {
+        console.error('Error assigning service:', err);
+        alert('Failed to assign service');
       }
-      const start = `${date}T${time}:00`;
-      const end = new Date(start);
-      end.setHours(end.getHours() + 1);
-      const data = getData();
-      const scheduleId = `sch${data.schedules.length + 1}`;
-      data.schedules.push({
-        id: scheduleId,
-        clientId: null,
-        walkerId: currentUser.id,
-        pet: 'TBD',
-        serviceType,
-        date,
-        time,
-        status: 'pending',
-        paymentStatus: 'unpaid'
-      });
-      const event = {
-        id: `event${Date.now()}`,
-        title: `Requested: ${serviceType}`,
-        start,
-        end: end.toISOString(),
-        advocateId: currentUser.id,
-        clientId: null,
-        status: 'pending',
-        public: false
-      };
-      saveLocalEvent(event);
-      saveData(data);
-      alert('Booking submitted! Awaiting admin assignment.');
-      document.getElementById('walker-service-type').value = '20 Minute Walk';
-      document.getElementById('walker-book-date').value = '';
-      document.getElementById('walker-book-time').value = '';
-      renderWalker();
-    }
-
-    function acceptService(scheduleId) {
-      const data = getData();
-      const schedule = data.schedules.find(s => s.id === scheduleId);
-      if (!schedule) {
-        alert('Schedule not found');
-        return;
-      }
-      schedule.walkerId = currentUser.id;
-      schedule.status = 'booked';
-      const event = calendarData.events.find(e => e.id === schedule.id || (e.clientId === schedule.clientId && e.start.includes(schedule.date)));
-      if (event) {
-        event.advocateId = currentUser.id;
-        event.status = 'booked';
-        event.title = `Booked: ${schedule.serviceType}`;
-        saveLocalEvent(event);
-      }
-      saveData(data);
-      const notification = {
-        walkerId: currentUser.id,
-        scheduleId,
-        serviceType: schedule.serviceType,
-        date: schedule.date,
-        time: schedule.time,
-        clientId: schedule.clientId,
-        status: 'assigned',
-        preferredContact: currentUser.preferredContact
-      };
-      fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-        method: 'POST',
-        body: JSON.stringify(notification)
-      }).catch(err => console.error('Webhook failed:', err));
-      alert('Service accepted');
-      renderWalker();
-    }
-
-    function assignService(scheduleId, walkerId) {
-      const data = getData();
-      const schedule = data.schedules.find(s => s.id === scheduleId);
-      if (!schedule) {
-        alert('Schedule not found');
-        return;
-      }
-      schedule.walkerId = walkerId;
-      schedule.status = 'booked';
-      const event = calendarData.events.find(e => e.id === schedule.id || (e.clientId === schedule.clientId && e.start.includes(schedule.date)));
-      if (event) {
-        event.advocateId = walkerId;
-        event.status = 'booked';
-        event.title = `Booked: ${schedule.serviceType}`;
-        saveLocalEvent(event);
-      }
-      const walker = data.users.find(u => u.id === walkerId);
-      const notification = {
-        walkerId,
-        scheduleId,
-        serviceType: schedule.serviceType,
-        date: schedule.date,
-        time: schedule.time,
-        clientId: schedule.clientId,
-        status: 'assigned',
-        preferredContact: walker.preferredContact
-      };
-      fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-        method: 'POST',
-        body: JSON.stringify(notification)
-      }).catch(err => console.error('Webhook failed:', err));
-      saveData(data);
-      alert('Service assigned');
-      renderAdmin();
     }
 
     function setAvailability() {
-      const date = document.getElementById('walker-date').value;
-      const time = document.getElementById('walker-time').value;
-      if (!date || !time) {
-        alert('Please select a date and time');
-        return;
+      try {
+        const date = document.getElementById('walker-date').value;
+        const time = document.getElementById('walker-time').value;
+        if (!date || !time) {
+          alert('Please select a date and time');
+          return;
+        }
+        const start = `${date}T${time}:00`;
+        const end = new Date(start);
+        end.setHours(end.getHours() + 1);
+        const event = {
+          id: `event${Date.now()}`,
+          title: 'Available Slot',
+          start,
+          end: end.toISOString(),
+          advocateId: currentUser.id,
+          clientId: null,
+          status: 'available',
+          public: true
+        };
+        saveLocalEvent(event);
+        alert('Availability set');
+        document.getElementById('walker-date').value = '';
+        document.getElementById('walker-time').value = '';
+        renderWalker();
+      } catch (err) {
+        console.error('Error setting availability:', err);
+        alert('Failed to set availability');
       }
-      const start = `${date}T${time}:00`;
-      const end = new Date(start);
-      end.setHours(end.getHours() + 1);
-      const event = {
-        id: `event${Date.now()}`,
-        title: 'Available Slot',
-        start,
-        end: end.toISOString(),
-        advocateId: currentUser.id,
-        clientId: null,
-        status: 'available',
-        public: true
-      };
-      saveLocalEvent(event);
-      alert('Availability set');
-      document.getElementById('walker-date').value = '';
-      document.getElementById('walker-time').value = '';
-      renderWalker();
     }
 
     function startGpsTracking() {
-      if (gpsTracking.active) {
-        alert('GPS tracking already active');
-        return;
+      try {
+        if (gpsTracking.active) {
+          alert('GPS tracking already active');
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            gpsTracking.start = `${pos.coords.latitude},${pos.coords.longitude}`;
+            gpsTracking.active = true;
+            document.getElementById('walker-report-gps').value = gpsTracking.start;
+            alert('GPS tracking started');
+          },
+          err => alert('GPS access denied: ' + err.message)
+        );
+      } catch (err) {
+        console.error('Error starting GPS tracking:', err);
+        alert('Failed to start GPS tracking');
       }
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          gpsTracking.start = `${pos.coords.latitude},${pos.coords.longitude}`;
-          gpsTracking.active = true;
-          document.getElementById('walker-report-gps').value = gpsTracking.start;
-          alert('GPS tracking started');
-        },
-        err => alert('GPS access denied: ' + err.message)
-      );
     }
 
     function endGpsTracking() {
-      if (!gpsTracking.active) {
-        alert('No active GPS tracking');
-        return;
+      try {
+        if (!gpsTracking.active) {
+          alert('No active GPS tracking');
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            gpsTracking.end = `${pos.coords.latitude},${pos.coords.longitude}`;
+            gpsTracking.active = false;
+            document.getElementById('walker-report-gps').value = gpsTracking.end;
+            alert('GPS tracking ended');
+          },
+          err => alert('GPS access denied: ' + err.message)
+        );
+      } catch (err) {
+        console.error('Error ending GPS tracking:', err);
+        alert('Failed to end GPS tracking');
       }
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          gpsTracking.end = `${pos.coords.latitude},${pos.coords.longitude}`;
-          gpsTracking.active = false;
-          document.getElementById('walker-report-gps').value = gpsTracking.end;
-          alert('GPS tracking ended');
-        },
-        err => alert('GPS access denied: ' + err.message)
-      );
     }
 
     function submitWalkerReport() {
-      const scheduleId = document.getElementById('walker-report-schedule').value;
-      const poop = document.getElementById('walker-report-poop').checked;
-      const pee = document.getElementById('walker-report-pee').checked;
-      const notes = document.getElementById('walker-report-notes').value;
-      const gps = gpsTracking.end || document.getElementById('walker-report-gps').value;
-      if (!scheduleId) {
-        alert('Please select a schedule');
-        return;
+      try {
+        const scheduleId = document.getElementById('walker-report-schedule').value;
+        const poop = document.getElementById('walker-report-poop').checked;
+        const pee = document.getElementById('walker-report-pee').checked;
+        const notes = document.getElementById('walker-report-notes').value;
+        const gps = gpsTracking.end || document.getElementById('walker-report-gps').value;
+        if (!scheduleId) {
+          alert('Please select a schedule');
+          return;
+        }
+        const data = getData();
+        const schedule = data.schedules.find(s => s.id === scheduleId);
+        const startTime = new Date().toISOString();
+        const endTime = new Date().toISOString();
+        const staticMapUrl = gpsTracking.start && gpsTracking.end
+          ? `https://staticmap.openstreetmap.de/staticmap.php?center=${gpsTracking.start.split(',')[0]},${gpsTracking.start.split(',')[1]}&zoom=14&size=400x200&path=color:red|weight:5|${gpsTracking.start}|${gpsTracking.end}`
+          : '';
+        const report = {
+          id: `rep${data.reports.length + 1}`,
+          scheduleId,
+          walkerId: currentUser.id,
+          startTime,
+          endTime,
+          poop,
+          pee,
+          notes,
+          gpsStart: gpsTracking.start,
+          gpsEnd: gps,
+          staticMapUrl,
+          timestamp: new Date().toISOString()
+        };
+        data.reports.push(report);
+        schedule.status = 'completed';
+        const event = calendarData.events.find(e => e.clientId === schedule.clientId && e.start.includes(schedule.date));
+        if (event) {
+          event.status = 'booked';
+          event.title = `Booked: ${schedule.serviceType}`;
+          saveLocalEvent(event);
+        }
+        const client = data.users.find(u => u.id === schedule.clientId);
+        const paymentLink = schedule.serviceType === '20 Minute Walk'
+          ? 'https://pay.stayleashed.com/20MinWalk'
+          : schedule.serviceType === '30 Minute Walk'
+          ? 'https://pay.stayleashed.com/30MinWalk'
+          : '';
+        const notification = {
+          clientId: schedule.clientId,
+          serviceType: schedule.serviceType,
+          startTime,
+          endTime,
+          poop,
+          pee,
+          notes,
+          gpsStart: gpsTracking.start || null,
+          gpsEnd: gps || null,
+          staticMapUrl,
+          paymentLink,
+          preferredContact: client ? client.preferredContact : {}
+        };
+        fetch('YOUR_ZAPIER_WEBHOOK_URL', {
+          method: 'POST',
+          body: JSON.stringify(notification)
+        }).catch(err => console.error('Webhook failed:', err));
+        saveData(data);
+        gpsTracking = { start: null, end: null, active: false };
+        document.getElementById('walker-report-schedule').value = '';
+        document.getElementById('walker-report-poop').checked = false;
+        document.getElementById('walker-report-pee').checked = false;
+        document.getElementById('walker-report-notes').value = '';
+        document.getElementById('walker-report-gps').value = '';
+        alert('Report submitted');
+        renderWalker();
+      } catch (err) {
+        console.error('Error submitting walker report:', err);
+        alert('Failed to submit report');
       }
-      const data = getData();
-      const schedule = data.schedules.find(s => s.id === scheduleId);
-      const startTime = new Date().toISOString();
-      const endTime = new Date().toISOString();
-      const staticMapUrl = gpsTracking.start && gpsTracking.end
-        ? `https://staticmap.openstreetmap.de/staticmap.php?center=${gpsTracking.start.split(',')[0]},${gpsTracking.start.split(',')[1]}&zoom=14&size=400x200&path=color:red|weight:5|${gpsTracking.start}|${gpsTracking.end}`
-        : '';
-      const report = {
-        id: `rep${data.reports.length + 1}`,
-        scheduleId,
-        walkerId: currentUser.id,
-        startTime,
-        endTime,
-        poop,
-        pee,
-        notes,
-        gpsStart: gpsTracking.start,
-        gpsEnd: gps,
-        staticMapUrl,
-        timestamp: new Date().toISOString()
-      };
-      data.reports.push(report);
-      schedule.status = 'completed';
-      const event = calendarData.events.find(e => e.clientId === schedule.clientId && e.start.includes(schedule.date));
-      if (event) {
-        event.status = 'booked';
-        event.title = `Booked: ${schedule.serviceType}`;
-        saveLocalEvent(event);
-      }
-      const client = data.users.find(u => u.id === schedule.clientId);
-      const paymentLink = schedule.serviceType === '20 Minute Walk'
-        ? 'https://pay.stayleashed.com/20MinWalk'
-        : schedule.serviceType === '30 Minute Walk'
-        ? 'https://pay.stayleashed.com/30MinWalk'
-        : '';
-      const notification = {
-        clientId: schedule.clientId,
-        serviceType: schedule.serviceType,
-        startTime,
-        endTime,
-        poop,
-        pee,
-        notes,
-        gpsStart: gpsTracking.start,
-        gpsEnd: gps,
-        staticMapUrl,
-        paymentLink,
-        preferredContact: client.preferredContact
-      };
-      fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-        method: 'POST',
-        body: JSON.stringify(notification)
-      }).catch(err => console.error('Webhook failed:', err));
-      saveData(data);
-      gpsTracking = { start: null, end: null, active: false };
-      document.getElementById('walker-report-schedule').value = '';
-      document.getElementById('walker-report-poop').checked = false;
-      document.getElementById('walker-report-pee').checked = false;
-      document.getElementById('walker-report-notes').value = '';
-      document.getElementById('walker-report-gps').value = '';
-      alert('Report submitted');
-      renderWalker();
     }
 
     function updatePaymentStatus(scheduleId, status) {
-      const data = getData();
-      const schedule = data.schedules.find(s => s.id === scheduleId);
-      if (schedule) {
-        schedule.paymentStatus = status;
-        saveData(data);
-        renderAdminServiceHistory();
+      try {
+        const data = getData();
+        const schedule = data.schedules.find(s => s.id === scheduleId);
+        if (schedule) {
+          schedule.paymentStatus = status;
+          saveData(data);
+          renderAdminServiceHistory();
+        }
+      } catch (err) {
+        console.error('Error updating payment status:', err);
+        alert('Failed to update payment status');
       }
     }
 
@@ -1036,302 +1144,344 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      } catch (error) {
-        alert('Failed to export calendar data: ' + error.message);
+      } catch (err) {
+        console.error('Error exporting calendar data:', err);
+        alert('Failed to export calendar data');
       }
     }
 
     function importCalendarData() {
-      const fileInput = document.getElementById('import-data');
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('Please select a file');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          localStorage.setItem('calendarEvents', JSON.stringify(importedData.events));
-          loadCalendarData();
-          alert('Calendar data imported successfully');
-        } catch (err) {
-          alert('Invalid JSON data');
+      try {
+        const fileInput = document.getElementById('import-data');
+        const file = fileInput.files[0];
+        if (!file) {
+          alert('Please select a file');
+          return;
         }
-      };
-      reader.readAsText(file);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            localStorage.setItem('calendarEvents', JSON.stringify(importedData.events));
+            loadCalendarData();
+            alert('Calendar data imported successfully');
+          } catch (err) {
+            console.error('Error parsing imported data:', err);
+            alert('Invalid JSON data');
+          }
+        };
+        reader.readAsText(file);
+      } catch (err) {
+        console.error('Error importing calendar data:', err);
+        alert('Failed to import calendar data');
+      }
     }
 
     function renderCalendars() {
-      if (currentUser.role === 'admin') {
-        const calendarEl = document.getElementById('admin-calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'timeGridWeek',
-          events: calendarData.events,
-          eventColor: '#ef4444',
-          headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
-          slotMinTime: '08:00:00',
-          slotMaxTime: '20:00:00',
-          height: '600px',
-          eventClick: function(info) {
-            if (confirm(`Delete event ${info.event.title}?`)) {
-              calendarData.events = calendarData.events.filter(e => e.id !== info.event.id);
-              localStorage.setItem('calendarEvents', JSON.stringify(calendarData.events));
-              calendar.refetchEvents();
-            }
+      try {
+        if (currentUser.role === 'admin') {
+          const calendarEl = document.getElementById('admin-calendar');
+          if (calendarEl) {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'timeGridWeek',
+              events: calendarData.events,
+              eventColor: '#ef4444',
+              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
+              slotMinTime: '08:00:00',
+              slotMaxTime: '20:00:00',
+              height: '600px',
+              eventClick: function(info) {
+                if (confirm(`Delete event ${info.event.title}?`)) {
+                  calendarData.events = calendarData.events.filter(e => e.id !== info.event.id);
+                  localStorage.setItem('calendarEvents', JSON.stringify(calendarData.events));
+                  calendar.refetchEvents();
+                }
+              }
+            });
+            calendar.render();
           }
-        });
-        calendar.render();
-      } else if (currentUser.role === 'walker') {
-        const calendarEl = document.getElementById('walker-calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'timeGridWeek',
-          events: calendarData.events.filter(e => e.advocateId === currentUser.id),
-          eventColor: '#3b82f6',
-          headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
-          slotMinTime: '08:00:00',
-          slotMaxTime: '20:00:00',
-          height: '400px'
-        });
-        calendar.render();
-      } else {
-        const calendarEl = document.getElementById('client-calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'timeGridWeek',
-          events: calendarData.events.filter(e => e.clientId === currentUser.id || e.status === 'pending'),
-          eventColor: '#10b981',
-          headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
-          slotMinTime: '08:00:00',
-          slotMaxTime: '20:00:00',
-          height: '400px'
-        });
-        calendar.render();
+        } else if (currentUser.role === 'walker') {
+          const calendarEl = document.getElementById('walker-calendar');
+          if (calendarEl) {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'timeGridWeek',
+              events: calendarData.events.filter(e => e.advocateId === currentUser.id || e.status === 'pending'),
+              eventColor: '#3b82f6',
+              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
+              slotMinTime: '08:00:00',
+              slotMaxTime: '20:00:00',
+              height: '400px'
+            });
+            calendar.render();
+          }
+        } else {
+          const calendarEl = document.getElementById('client-calendar');
+          if (calendarEl) {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'timeGridWeek',
+              events: calendarData.events.filter(e => e.clientId === currentUser.id || e.status === 'pending'),
+              eventColor: '#10b981',
+              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
+              slotMinTime: '08:00:00',
+              slotMaxTime: '20:00:00',
+              height: '400px'
+            });
+            calendar.render();
+          }
+        }
+      } catch (err) {
+        console.error('Error rendering calendars:', err);
       }
     }
 
     function renderAdmin() {
-      const data = getData();
-      const userSelect = document.getElementById('admin-user-select');
-      const dispatchList = document.getElementById('admin-dispatch');
-      const reportsList = document.getElementById('admin-reports');
-      userSelect.innerHTML = '<option value="">Select User</option>';
-      dispatchList.innerHTML = '';
-      reportsList.innerHTML = '';
+      try {
+        const data = getData();
+        const userSelect = document.getElementById('admin-user-select');
+        const dispatchList = document.getElementById('admin-dispatch');
+        const reportsList = document.getElementById('admin-reports');
+        userSelect.innerHTML = '<option value="">Select User</option>';
+        dispatchList.innerHTML = '';
+        reportsList.innerHTML = '';
 
-      data.users.forEach(u => {
-        userSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
-      });
+        data.users.forEach(u => {
+          userSelect.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
+        });
 
-      const unassignedSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
-      unassignedSchedules.forEach(s => {
-        const walkerOptions = data.users
-          .filter(u => u.role === 'walker')
-          .map(u => `<option value="${u.id}">${u.firstName} ${u.lastName}</option>`)
-          .join('');
-        dispatchList.innerHTML += `
-          <li class="flex-between">
-            <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
-            <div>
-              <select id="dispatch-walker-${s.id}">
-                <option value="">Select Walker</option>
-                ${walkerOptions}
-              </select>
-              <button class="btn btn-blue" onclick="assignService('${s.id}', document.getElementById('dispatch-walker-${s.id}').value)">Assign</button>
-            </div>
-          </li>
-        `;
-      });
+        const unassignedSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
+        unassignedSchedules.forEach(s => {
+          const walkerOptions = data.users
+            .filter(u => u.role === 'walker')
+            .map(u => `<option value="${u.id}">${u.firstName} ${u.lastName}</option>`)
+            .join('');
+          dispatchList.innerHTML += `
+            <li class="flex-between">
+              <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
+              <div>
+                <select id="dispatch-walker-${s.id}">
+                  <option value="">Select Walker</option>
+                  ${walkerOptions}
+                </select>
+                <button class="btn btn-blue" onclick="assignService('${s.id}', document.getElementById('dispatch-walker-${s.id}').value)">Assign</button>
+              </div>
+            </li>
+          `;
+        });
 
-      data.reports.forEach(r => {
-        const schedule = data.schedules.find(s => s.id === r.scheduleId);
-        reportsList.innerHTML += `
-          <li>Service: ${schedule.serviceType}, Start: ${r.startTime}, End: ${r.endTime}, Poop: ${r.poop}, Pee: ${r.pee}, Notes: ${r.notes}, GPS: ${r.gpsStart} to ${r.gpsEnd}</li>
-        `;
-      });
-      renderAdminServiceHistory();
+        data.reports.forEach(r => {
+          const schedule = data.schedules.find(s => s.id === r.scheduleId);
+          reportsList.innerHTML += `
+            <li>Service: ${schedule.serviceType}, Start: ${r.startTime}, End: ${r.endTime}, Poop: ${r.poop}, Pee: ${r.pee}, Notes: ${r.notes}, GPS: ${r.gpsStart} to ${r.gpsEnd}</li>
+          `;
+        });
+        renderAdminServiceHistory();
+      } catch (err) {
+        console.error('Error rendering admin dashboard:', err);
+        alert('Failed to render admin dashboard');
+      }
     }
 
     function renderAdminServiceHistory() {
-      const userId = document.getElementById('admin-user-select').value;
-      const historyList = document.getElementById('admin-service-history');
-      historyList.innerHTML = '';
-      if (!userId) return;
-      const data = getData();
-      const schedules = data.schedules.filter(s => s.clientId === userId || s.walkerId === userId);
-      schedules.forEach(s => {
-        const report = data.reports.find(r => r.scheduleId === s.id);
-        const paymentOptions = s.paymentStatus === 'paid'
-          ? '<option value="paid" selected>Paid</option><option value="unpaid">Unpaid</option>'
-          : '<option value="paid">Paid</option><option value="unpaid" selected>Unpaid</option>';
-        historyList.innerHTML += `
-          <li>
-            Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: 
-            <select onchange="updatePaymentStatus('${s.id}', this.value)">${paymentOptions}</select>
-            ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
-            ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
-          </li>
-        `;
-      });
+      try {
+        const userId = document.getElementById('admin-user-select').value;
+        const historyList = document.getElementById('admin-service-history');
+        historyList.innerHTML = '';
+        if (!userId) return;
+        const data = getData();
+        const schedules = data.schedules.filter(s => s.clientId === userId || s.walkerId === userId);
+        schedules.forEach(s => {
+          const report = data.reports.find(r => r.scheduleId === s.id);
+          const paymentOptions = s.paymentStatus === 'paid'
+            ? '<option value="paid" selected>Paid</option><option value="unpaid">Unpaid</option>'
+            : '<option value="paid">Paid</option><option value="unpaid" selected>Unpaid</option>';
+          historyList.innerHTML += `
+            <li>
+              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: 
+              <select onchange="updatePaymentStatus('${s.id}', this.value)">${paymentOptions}</select>
+              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+              ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
+            </li>
+          `;
+        });
+      } catch (err) {
+        console.error('Error rendering admin service history:', err);
+        alert('Failed to render service history');
+      }
     }
 
     function renderWalker() {
-      const data = getData();
-      const schedulesList = document.getElementById('walker-schedules');
-      const availableServicesList = document.getElementById('walker-available-services');
-      const reportSelect = document.getElementById('walker-report-schedule');
-      const profileDisplay = document.getElementById('walker-profile-display');
-      schedulesList.innerHTML = '';
-      availableServicesList.innerHTML = '';
-      reportSelect.innerHTML = '<option value="">Select Schedule</option>';
+      try {
+        const data = getData();
+        const schedulesList = document.getElementById('walker-schedules');
+        const availableServicesList = document.getElementById('walker-available-services');
+        const reportSelect = document.getElementById('walker-report-schedule');
+        const profileDisplay = document.getElementById('walker-profile-display');
+        schedulesList.innerHTML = '';
+        availableServicesList) availableServicesList.innerHTML = '';
+        reportSelect.innerHTML = '<option value="">Select Schedule</option>';
 
-      const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
-      schedules.forEach(s => {
-        let buttons = '';
-        if (s.status !== 'completed') {
-          buttons = `
-            <input type="text" id="gps-${s.id}" placeholder="Enter mock GPS (e.g., 37.7749,-122.4194)">
-            <button class="btn btn-green" onclick="handleCheckInOut('${s.id}', 'check-in', document.getElementById('gps-${s.id}').value)" ${s.status === 'in-progress' ? 'disabled' : ''}>Check-In</button>
-            <button class="btn btn-yellow" onclick="handleCheckInOut('${s.id}', 'check-out', document.getElementById('gps-${s.id}').value)" ${s.status !== 'in-progress' ? 'disabled' : ''}>Check-Out</button>
+        const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
+        schedules.forEach(s => {
+          let buttons = '';
+          if (s.status !== 'completed') {
+            buttons = `
+              <input type="text" id="gps-${s.id}" placeholder="Enter mock GPS (e.g., 37.7749,-122.4194)">
+              <button class="btn btn-green" onclick="handleCheckInOut('${s.id}', 'check-in', document.getElementById('gps-${s.id}').value)" ${s.status === 'in-progress' ? 'disabled' : ''}>Check-In</button>
+              <button class="btn btn-yellow" onclick="handleCheckInOut('${s.id}', 'check-out', document.getElementById('gps-${s.id}').value)" ${s.status !== 'in-progress' ? 'disabled' : ''}>Check-Out</button>
+            `;
+          }
+          schedulesList.innerHTML += `
+            <li class="flex-between">
+              <span>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
+              <div>${buttons}</div>
+            </li>
           `;
-        }
-        schedulesList.innerHTML += `
-          <li class="flex-between">
-            <span>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
-            <div>${buttons}</div>
-          </li>
-        `;
-        if (s.status !== 'completed') {
-          reportSelect.innerHTML += `<option value="${s.id}">${s.serviceType} on ${s.date} at ${s.time}</option>`;
-        }
-      });
-
-      const availableSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
-      availableSchedules.forEach(s => {
-        availableServicesList.innerHTML += `
-          <li class="flex-between">
-            <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
-            <button class="btn btn-blue" onclick="acceptService('${s.id}')">Accept</button>
-          </li>
-        `;
-      });
-
-      profileDisplay.innerHTML = `
-        <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
-        <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
-        <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
-      `;
-      document.getElementById('walker-firstname').value = currentUser.firstName;
-      document.getElementById('walker-lastname').value = currentUser.lastName;
-      document.getElementById('walker-street-number').value = currentUser.address.streetNumber;
-      document.getElementById('walker-street-address').value = currentUser.address.streetAddress;
-      document.getElementById('walker-address-line2').value = currentUser.address.addressLine2;
-      document.getElementById('walker-city').value = currentUser.address.city;
-      document.getElementById('walker-state').value = currentUser.address.state;
-      document.getElementById('walker-zip').value = currentUser.address.zip;
-      document.getElementById('walker-contact-text').checked = currentUser.preferredContact.text;
-      document.getElementById('walker-contact-email').checked = currentUser.preferredContact.email;
-      document.getElementById('walker-contact-voice').checked = currentUser.preferredContact.voice;
-
-      const historyList = document.getElementById('walker-service-history');
-      historyList.innerHTML = '';
-      schedules.forEach(s => {
-        const report = data.reports.find(r => r.scheduleId === s.id);
-        historyList.innerHTML += `
-          <li>
-            Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-            ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
-            ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
-          </li>
-        `;
-      });
-
-      const tabs = document.querySelectorAll('#walker .tab');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('#walker .tab-content').forEach(c => c.classList.add('hidden'));
-          tab.classList.add('active');
-          document.getElementById(tab.dataset.tab).classList.remove('hidden');
+          if (s.status !== 'completed') {
+            reportSelect.innerHTML += `<option value="${s.id}">${s.serviceType} on ${s.date} at ${s.time}</option>`;
+          }
         });
-      });
 
-      renderCalendars();
+        const availableSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
+        availableSchedules.forEach(s => {
+          availableServicesList.innerHTML += `
+            <li class="flex-between">
+              <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
+              <button class="btn btn-blue" onclick="acceptService('${s.id}')">Accept</button>
+            </li>
+          `;
+        });
+
+        profileDisplay.innerHTML = `
+          <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
+          <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
+          <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
+        `;
+        document.getElementById('walker-firstname').value = currentUser.firstName;
+        document.getElementById('walker-lastname').value = currentUser.lastName;
+        document.getElementById('walker-street-number').value = currentUser.address.streetNumber;
+        document.getElementById('walker-street-address').value = currentUser.address.streetAddress;
+        document.getElementById('walker-address-line2').value = currentUser.address.addressLine2;
+        document.getElementById('walker-city').value = currentUser.address.city;
+        document.getElementById('walker-state').value = currentUser.address.state;
+        document.getElementById('walker-zip').value = currentUser.address.zip;
+        document.getElementById('walker-contact-text').checked = currentUser.preferredContact.text;
+        document.getElementById('walker-contact-email').checked = currentUser.preferredContact.email;
+        document.getElementById('walker-contact-voice').checked = currentUser.preferredContact.voice;
+
+        const historyList = document.getElementById('walker-service-history');
+        historyList.innerHTML = '';
+        schedules.forEach(s => {
+          const report = data.reports.find(r => r.scheduleId === s.id);
+          historyList.innerHTML += `
+            <li>
+              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
+              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+              ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
+            </li>
+          `;
+        });
+
+        const tabs = document.querySelectorAll('#walker .tab');
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#walker .tab-content').forEach(c => c.classList.add('hidden'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.remove('hidden');
+          });
+        });
+
+        renderCalendars();
+      } catch (err) {
+        console.error('Error rendering walker dashboard:', err);
+        alert('Failed to render walker dashboard');
+      }
     }
 
     function renderClient() {
-      const data = getData();
-      const schedulesList = document.getElementById('client-schedules');
-      const profileDisplay = document.getElementById('client-profile-display');
-      schedulesList.innerHTML = '';
+      try {
+        const data = getData();
+        const schedulesList = document.getElementById('client-schedules');
+        const profileDisplay = document.getElementById('client-profile-display');
+        schedulesList.innerHTML = '';
 
-      const schedules = data.schedules.filter(s => s.clientId === currentUser.id);
-      schedules.forEach(s => {
-        schedulesList.innerHTML += `<li>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}</li>`;
-      });
-
-      profileDisplay.innerHTML = `
-        <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
-        <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
-        <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
-      `;
-      document.getElementById('client-firstname').value = currentUser.firstName;
-      document.getElementById('client-lastname').value = currentUser.lastName;
-      document.getElementById('client-street-number').value = currentUser.address.streetNumber;
-      document.getElementById('client-street-address').value = currentUser.address.streetAddress;
-      document.getElementById('client-address-line2').value = currentUser.address.addressLine2;
-      document.getElementById('client-city').value = currentUser.address.city;
-      document.getElementById('client-state').value = currentUser.address.state;
-      document.getElementById('client-zip').value = currentUser.address.zip;
-      document.getElementById('client-contact-text').checked = currentUser.preferredContact.text;
-      document.getElementById('client-contact-email').checked = currentUser.preferredContact.email;
-      document.getElementById('client-contact-voice').checked = currentUser.preferredContact.voice;
-
-      const historyList = document.getElementById('client-service-history');
-      historyList.innerHTML = '';
-      schedules.forEach(s => {
-        const report = data.reports.find(r => r.scheduleId === s.id);
-        historyList.innerHTML += `
-          <li>
-            Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-            ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
-            ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
-          </li>
-        `;
-      });
-
-      const tabs = document.querySelectorAll('#client .tab');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('#client .tab-content').forEach(c => c.classList.add('hidden'));
-          tab.classList.add('active');
-          document.getElementById(tab.dataset.tab).classList.remove('hidden');
+        const schedules = data.schedules.filter(s => s.clientId === currentUser.id);
+        schedules.forEach(s => {
+          schedulesList.innerHTML += `<li>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}</li>`;
         });
-      });
 
-      renderCalendars();
+        profileDisplay.innerHTML = `
+          <p><strong>Name:</strong> ${currentUser.firstName} ${currentUser.lastName}</p>
+          <p><strong>Address:</strong> ${currentUser.address.streetNumber} ${currentUser.address.streetAddress}${currentUser.address.addressLine2 ? ', ' + currentUser.address.addressLine2 : ''}, ${currentUser.address.city}, ${currentUser.address.state} ${currentUser.address.zip}</p>
+          <p><strong>Contact:</strong> ${Object.keys(currentUser.preferredContact).filter(k => currentUser.preferredContact[k]).join(', ') || 'None'}</p>
+        `;
+        document.getElementById('client-firstname').value = currentUser.firstName;
+        document.getElementById('client-lastname').value = currentUser.lastName;
+        document.getElementById('client-street-number').value = currentUser.address.streetNumber;
+        document.getElementById('client-street-address').value = currentUser.address.streetAddress;
+        document.getElementById('client-address-line2').value = currentUser.address.addressLine2;
+        document.getElementById('client-city').value = currentUser.address.city;
+        document.getElementById('client-state').value = currentUser.address.state;
+        document.getElementById('client-zip').value = currentUser.address.zip;
+        document.getElementById('client-contact-text').checked = currentUser.preferredContact.text;
+        document.getElementById('client-contact-email').checked = currentUser.preferredContact.email;
+        document.getElementById('client-contact-voice').checked = currentUser.preferredContact.voice;
+
+        const historyList = document.getElementById('client-service-history');
+        historyList.innerHTML = '';
+        schedules.forEach(s => {
+          const report = data.reports.find(r => r.scheduleId === s.id);
+          historyList.innerHTML += `
+            <li>
+              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
+              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${r.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
+              ${report && report.staticMapUrl ? `<br><img src="${report.staticMapUrl}" alt="GPS Map" class="map">` : ''}
+            </li>
+          `;
+        });
+
+        const tabs = document.querySelectorAll('#client .tab');
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#client .tab-content').forEach(c => c.classList.add('hidden'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.remove('hidden');
+          });
+        });
+
+        renderCalendars();
+      } catch (err) {
+        console.error('Error rendering client dashboard:', err);
+        alert('Failed to render client dashboard');
+      }
     }
 
     function handleCheckInOut(scheduleId, action, gps) {
-      const data = getData();
-      const timestamp = new Date().toISOString();
-      data.checkIns.push({
-        id: `check${data.checkIns.length + 1}`,
-        scheduleId,
-        action,
-        gps,
-        timestamp
-      });
-      const schedule = data.schedules.find(s => s.id === scheduleId);
-      schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
-      const event = calendarData.events.find(e => e.advocateId === schedule.walkerId && e.clientId === schedule.clientId && e.start.includes(schedule.date));
-      if (event) {
-        event.status = schedule.status === 'completed' ? 'booked' : schedule.status;
-        saveLocalEvent(event);
+      try {
+        const data = getData();
+        const timestamp = new Date().toISOString();
+        data.checkIns.push({
+          id: `check${data.checkIns.length + 1}`,
+          scheduleId,
+          action,
+          gps,
+          timestamp
+        });
+        const schedule = data.schedules.find(s => s.id === scheduleId);
+        schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
+        const event = calendarData.events.find(e => e.advocateId === schedule.walkerId && e.clientId === schedule.clientId && e.start.includes(schedule.date));
+        if (event) {
+          event.status = schedule.status === 'completed' ? 'booked' : schedule.status;
+          saveLocalEvent(event);
+        }
+        saveData(data);
+        alert(`${action} recorded`);
+        renderWalker();
+      } catch (err) {
+        console.error('Error handling check-in/out:', err);
+        alert('Failed to record check-in/out');
       }
-      saveData(data);
-      alert(`${action} recorded`);
-      renderWalker();
     }
 
     initializeData();

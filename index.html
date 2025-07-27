@@ -426,7 +426,7 @@
         </div>
         <button class="btn btn-blue" onclick="updateClientProfile()">Save Profile</button>
         <h3>Update Password</h3>
-        <button class="showSection('btn btn-yellow" onclick="reset-password')">Request Password Reset</button>
+        <button class="btn btn-yellow" onclick="showSection('reset-password')">Request Password Reset</button>
       </div>
     </div>
     <div id="client-history" class="tab-content hidden">
@@ -465,7 +465,8 @@
               password: btoa('walker123'),
               role: 'walker',
               address: { streetNumber: '123', streetAddress: 'Elm St', addressLine2: '', city: 'Anytown', state: 'CA', zip: '12345' },
-              preferredContact: { text: true, email: false, voice: false }
+              preferredContact: { text: true, email: false, voice: false },
+              phone: '555-123-4567'
             },
             {
               id: 'client1',
@@ -475,7 +476,8 @@
               password: btoa('client123'),
               role: 'client',
               address: { streetNumber: '456', streetAddress: 'Oak St', addressLine2: 'Apt 2B', city: 'Othertown', state: 'CA', zip: '67890' },
-              preferredContact: { text: false, email: true, voice: false }
+              preferredContact: { text: false, email: true, voice: false },
+              phone: '555-987-6543'
             }
           ],
           schedules: [],
@@ -688,7 +690,7 @@
           return;
         }
 
-        user.password = btoa(newPassword');
+        user.password = btoa(newPassword);
         saveData(data);
         localStorage.removeItem(`resetCode_${user.id}`);
         alert('Password updated successfully');
@@ -741,6 +743,23 @@
           localEvents.push(event);
         }
         localStorage.setItem('calendarEvents', JSON.stringify(localEvents));
+        // Send event to Zapier webhook for reminders
+        fetch('https://hooks.zapier.com/hooks/catch/XXXXX/YYYYY/', {
+          method: 'POST',
+          body: JSON.stringify(event)
+        })
+        .then(response => {
+          if (!response.ok) {
+            console.error('Failed to send event to Zapier:', response.statusText);
+            alert('Failed to send event to Zapier');
+          } else {
+            alert('Event sent to Zapier successfully');
+          }
+        })
+        .catch(e => {
+          console.error('Zapier webhook error:', e);
+          alert('Error sending event to Zapier');
+        });
       } catch (e) {
         alert('Error saving calendar event');
         console.error('Event save error:', e);
@@ -797,7 +816,8 @@
           username,
           password: btoa(password),
           role,
-          preferredContact: { text: contactText, email: contactEmail, voice: contactVoice }
+          preferredContact: { text: contactText, email: contactEmail, voice: contactVoice },
+          phone: ''
         });
 
         saveData(data);
@@ -1022,7 +1042,7 @@
         timeEl.value = '';
         renderWalker();
       } catch (e) {
-        error('Error setting availability');
+        alert('Error setting availability');
         console.error('Availability error:', e);
       }
     }
@@ -1030,46 +1050,46 @@
     function startGpsTracking() {
       try {
         alert('Starting GPS tracking...');
-        if (gpsTracking.activeElements) {
-          alert('GPS tracking already active elements');
+        if (gpsTracking.active) {
+          alert('GPS tracking already active');
           return;
         }
         navigator.geolocation.getCurrentPosition(
           pos => {
-            gpsTracking.startTime = `${pos.coords.latitude},${pos.coords.longitude}`;
-            gpsTracking.activeElements = true;
+            gpsTracking.start = `${pos.coords.latitude},${pos.coords.longitude}`;
+            gpsTracking.active = true;
             const gpsEl = document.getElementById('walker-report-gps');
-            if (gpsEl) gpsEl.value = gpsTracking.startTime;
+            if (gpsEl) gpsEl.value = gpsTracking.start;
             alert('GPS tracking started successfully');
           },
           e => alert('GPS access denied: ' + e.message)
         );
       } catch (e) {
         alert('Error starting GPS tracking');
-        console.error('GPS start error:', e.g);
+        console.error('GPS start error:', e);
       }
     }
 
     function endGpsTracking() {
       try {
         alert('Ending GPS tracking');
-        if (!gpsTracking.activeElements)) {
-          alert('No active GPS tracking elements');
+        if (!gpsTracking.active) {
+          alert('No active GPS tracking');
           return;
         }
         navigator.geolocation.getCurrentPosition(
           pos => {
-            gpsTracking.endTime = `${pos.coords.latitude},${pos.coords.longitude}`;
-            gpsTracking.activeElements = false;
+            gpsTracking.end = `${pos.coords.latitude},${pos.coords.longitude}`;
+            gpsTracking.active = false;
             const gpsEl = document.getElementById('walker-report-gps');
-            if (gpsEl) gpsEl.value = gpsTracking.endTime;
+            if (gpsEl) gpsEl.value = gpsTracking.end;
             alert('GPS tracking ended successfully');
           },
           e => alert('GPS access denied: ' + e.message)
         );
       } catch (e) {
         alert('Error ending GPS tracking');
-        console.error('GPS end error:', e.g);
+        console.error('GPS end error:', e);
       }
     }
 
@@ -1077,11 +1097,11 @@
       try {
         alert('Submitting walker report...');
         const scheduleEl = document.getElementById('walker-report-schedule');
-        const poopEl = document.getElementById('walker-report-po');
+        const poopEl = document.getElementById('walker-report-poop');
         const peeEl = document.getElementById('walker-report-pee');
         const notesEl = document.getElementById('walker-report-notes');
         const gpsEl = document.getElementById('walker-report-gps');
-        if (!scheduleEl || !poopEl || !peeEl || !pnotesEl || !gpsEl) {
+        if (!scheduleEl || !poopEl || !peeEl || !notesEl || !gpsEl) {
           alert('Report elements missing');
           return;
         }
@@ -1089,7 +1109,7 @@
         const poop = poopEl.checked;
         const pee = peeEl.checked;
         const notes = notesEl.value;
-        const gps = gpsTracking.endTime || gpsEl.value;
+        const gps = gpsTracking.end || gpsEl.value;
         if (!scheduleId) {
           alert('Please select a schedule');
           return;
@@ -1119,7 +1139,7 @@
         schedule.status = 'completed';
         saveData(data);
         alert('Report submitted successfully');
-        gpsTracking = { start: null, endTime: null, active: false };
+        gpsTracking = { start: null, end: null, active: false };
         scheduleEl.value = '';
         poopEl.checked = false;
         peeEl.checked = false;
@@ -1144,7 +1164,7 @@
         const firstNameEl = document.getElementById('walker-firstname');
         const lastNameEl = document.getElementById('walker-lastname');
         const streetNumberEl = document.getElementById('walker-street-number');
-        const streetAddressEl = document.getElementById('walker-address-address');
+        const streetAddressEl = document.getElementById('walker-street-address');
         const addressLine2El = document.getElementById('walker-address-line2');
         const cityEl = document.getElementById('walker-city');
         const stateEl = document.getElementById('walker-state');
@@ -1160,13 +1180,13 @@
         user.lastName = lastNameEl.value;
         user.address.streetNumber = streetNumberEl?.value || '';
         user.address.streetAddress = streetAddressEl?.value || '';
-        user.addressLine2.addressLine2 = addressLine2El?.value || '';
+        user.address.addressLine2 = addressLine2El?.value || '';
         user.address.city = cityEl?.value || '';
         user.address.state = stateEl?.value || '';
         user.address.zip = zipEl?.value || '';
         user.preferredContact.text = contactTextEl?.checked || false;
         user.preferredContact.email = contactEmailEl?.checked || false;
-        user.preferredContactVoice = contactVoiceEl?.preferredContact || false;
+        user.preferredContact.voice = contactVoiceEl?.checked || false;
         saveData(data);
         alert('Profile updated successfully');
         renderWalker();
@@ -1188,29 +1208,29 @@
         const firstNameEl = document.getElementById('client-firstname');
         const lastNameEl = document.getElementById('client-lastname');
         const streetNumberEl = document.getElementById('client-street-number');
-        const streetAddressEl = document.getElementById('client-address-address');
+        const streetAddressEl = document.getElementById('client-street-address');
         const addressLine2El = document.getElementById('client-address-line2');
         const cityEl = document.getElementById('client-city');
-        const stateEl = document.getElementById('client-state-id');
-        const zipEl = document.getElementById('zip-id');
-        const contactTextEl = contact.getElementById('contact-id');
-        const contactEmailEl = contact.getElementById('contact-email');
-        const contactVoiceEl = contact.getElementById('contact-id');
-        if (!firstName || !lastNameEl) {
+        const stateEl = document.getElementById('client-state');
+        const zipEl = document.getElementById('client-zip');
+        const contactTextEl = document.getElementById('client-contact-text');
+        const contactEmailEl = document.getElementById('client-contact-email');
+        const contactVoiceEl = document.getElementById('client-contact-voice');
+        if (!firstNameEl || !lastNameEl) {
           alert('Profile elements missing');
           return;
         }
         user.firstName = firstNameEl?.value || '';
         user.lastName = lastNameEl?.value || '';
         user.address.streetNumber = streetNumberEl?.value || '';
-        user.streetAddress.streetNumber = streetAddressEl?.streetAddress || '';
-        user.addressLine2.address = addressLine2El?.addressLine2 || '';
+        user.address.streetAddress = streetAddressEl?.value || '';
+        user.address.addressLine2 = addressLine2El?.value || '';
         user.address.city = cityEl?.value || '';
         user.address.state = stateEl?.value || '';
         user.address.zip = zipEl?.value || '';
         user.preferredContact.text = contactTextEl?.checked || false;
         user.preferredContact.email = contactEmailEl?.checked || false;
-        user.preferredContactVoice = contactVoiceEl?.preferredContact || false;
+        user.preferredContact.voice = contactVoiceEl?.checked || false;
         saveData(data);
         alert('Profile updated successfully');
         renderClient();
@@ -1231,10 +1251,10 @@
         }
         schedule.paymentStatus = status;
         saveData(data);
-        renderAdminService();
+        renderAdmin();
       } catch (e) {
         alert('Error updating payment status');
-        console.error('Payment status:', e);
+        console.error('Payment status error:', e);
       }
     }
 
@@ -1242,15 +1262,15 @@
       try {
         alert('Exporting calendar data...');
         const eventData = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-        const blobData = new Blob([JSON.stringify({ events: eventData }, null, 2)], { type: 'application/json' });
-        const url = URL.createObject(blob);
+        const blob = new Blob([JSON.stringify({ events: eventData }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = 'calendar-data.json';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObject(url);
+        URL.revokeObjectURL(url);
       } catch (e) {
         alert('Error exporting calendar data');
         console.error('Export error:', e);
@@ -1261,15 +1281,15 @@
       try {
         alert('Importing calendar data...');
         const fileInput = document.getElementById('import-data');
-        const fileData = fileInput?.files?.[0];
-        if (!fileData) {
+        const file = fileInput?.files?.[0];
+        if (!file) {
           alert('Please select a file');
           return;
         }
         const reader = new FileReader();
-        reader.onload = function(e) => {
+        reader.onload = function(e) {
           try {
-            const importedEvents = JSON.parse(e.target.result);
+            const importedData = JSON.parse(e.target.result);
             localStorage.setItem('calendarEvents', JSON.stringify(importedData.events));
             loadCalendarData();
             alert('Calendar data imported successfully');
@@ -1279,7 +1299,7 @@
             console.error('Import parse error:', e);
           }
         };
-        reader.readAsText(fileData);
+        reader.readAsText(file);
       } catch (e) {
         alert('Error importing calendar data');
         console.error('Import error:', e);
@@ -1304,7 +1324,7 @@
               slotMinTime: '08:00:00',
               slotMaxTime: '20:00:00',
               height: '600px',
-              'eventClick: function(info) {
+              eventClick: function(info) {
                 if (confirm(`Delete event ${info.event.title}?`)) {
                   calendarData.events = calendarData.events.filter(e => e.id !== info.event.id);
                   localStorage.setItem('calendarEvents', JSON.stringify(calendarData.events));
@@ -1320,22 +1340,22 @@
           if (calendarEl) {
             const calendar = new FullCalendar.Calendar(calendarEl, {
               initialView: 'timeGridWeek',
-              events: calendarData.events.filter(e => e.advocateId === currentUser.id || e.idstatus === 'pending'),
+              events: calendarData.events.filter(e => e.advocateId === currentUser.id || e.status === 'pending'),
               eventColor: '#3b82f6',
-              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,timeGridDayMonth' },
+              headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
               slotMinTime: '08:00:00',
               slotMaxTime: '20:00:00',
               height: '400px'
             });
             calendar.render();
-            alert('Walker calendar rendered successfully');
+            alert('Walker calendar rendered');
           }
         } else {
           const calendarEl = document.getElementById('client-calendar');
           if (calendarEl) {
             const calendar = new FullCalendar.Calendar(calendarEl, {
               initialView: 'timeGridWeek',
-              events: calendarData.events.filter(e => e.clientId === currentUser.id || e.idstatus === 'pending'),
+              events: calendarData.events.filter(e => e.clientId === currentUser.id || e.status === 'pending'),
               eventColor: '#10b981',
               headerToolbar: { left: 'prev,next', center: 'title', right: 'timeGridWeek,dayGridMonth' },
               slotMinTime: '08:00:00',
@@ -1343,7 +1363,7 @@
               height: '400px'
             });
             calendar.render();
-            alert('Client calendar rendered successfully');
+            alert('Client calendar rendered');
           }
         }
       } catch (e) {
@@ -1357,8 +1377,8 @@
         alert('Rendering admin dashboard...');
         const data = getData();
         const userSelectEl = document.getElementById('admin-user-select');
-        const dispatchListEl = document.getElementById('admin-listdispatch');
-        const reportsListEl = document.getElementById('admin-listreports');
+        const dispatchListEl = document.getElementById('admin-dispatch');
+        const reportsListEl = document.getElementById('admin-reports');
         if (!userSelectEl || !dispatchListEl || !reportsListEl) {
           alert('Admin dashboard elements missing');
           return;
@@ -1371,16 +1391,15 @@
           userSelectEl.innerHTML += `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.username})</option>`;
         });
 
-        users.forEach(s => {
-          const unassignedSchedules = data.schedules.filter(s => !s.walkerId && s.schedulestatus === 'pending');
-        unassignedSchedulesList.forEach(s => {
-          const walkerOptionsList = data.users
-            .filter(u => u.roleid === 'walker')
+        const unassignedSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
+        unassignedSchedules.forEach(s => {
+          const walkerOptions = data.users
+            .filter(u => u.role === 'walker')
             .map(u => `<option value="${u.id}">${u.firstName} ${u.lastName}</option>`)
             .join('');
           dispatchListEl.innerHTML += `
             <li class="flex-between">
-              <span class="">Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
+              <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
               <div>
                 <select id="dispatch_${s.id}">
                   <option value="">Select Walker</option>
@@ -1392,48 +1411,48 @@
           `;
         });
 
-        data.reportsList.forEach(r => {
+        data.reports.forEach(r => {
           const schedule = data.schedules.find(s => s.id === r.scheduleId);
           reportsListEl.innerHTML += `
-            <li>Service: ${schedule?.serviceType || 'Unknown'}, Start: ${r.startTime}, End: ${r.endTime}, Poop: ${r.poop}, Contact: ${r.notes}, '</li>
-            `;
+            <li>Service: ${schedule?.serviceType || 'Unknown'}, Start: ${r.startTime}, End: ${r.endTime}, Poop: ${r.poop}, Pee: ${r.pee}, Notes: ${r.notes}</li>
+          `;
         });
-        renderAdminService();
-        alert('Admin dashboard rendered successfully');
+        renderAdminServiceHistory();
+        alert('Admin dashboard rendered');
       } catch (e) {
         alert('Error rendering admin dashboard');
-        console.error('Admin render error:', error);
+        console.error('Admin render error:', e);
       }
     }
 
     function renderAdminServiceHistory() {
       try {
         alert('Rendering service history...');
-        const userSelectEl = document.getElementById('user-select');
-        const historyListEl = document.getElementById('service-history');
+        const userSelectEl = document.getElementById('admin-user-select');
+        const historyListEl = document.getElementById('admin-service-history');
         if (!userSelectEl || !historyListEl) {
           alert('Service history elements missing');
           return;
         }
         const userId = userSelectEl.value;
         historyListEl.innerHTML = '';
-        if (!userId) historyList.innerHTML = ''; return;
+        if (!userId) return;
         const data = getData();
-        const schedulesList = data.schedules.filter(s => s.clientId === userId || s.idwalkerId === userId);
-        schedulesList.forEach(s => {
-          const reportList = data.reports.find(r => r.scheduleId === s.id);
-          const paymentStatusOptions = s.paymentStatus === 'paid'
+        const schedules = data.schedules.filter(s => s.clientId === userId || s.walkerId === userId);
+        schedules.forEach(s => {
+          const report = data.reports.find(r => r.scheduleId === s.id);
+          const paymentOptions = s.paymentStatus === 'paid'
             ? '<option value="paid" selected>Paid</option><option value="unpaid">Unpaid</option>'
             : '<option value="paid">Paid</option><option value="unpaid" selected>Unpaid</option>';
           historyListEl.innerHTML += `
             <li>
-              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.idstatus}, Payment: 
+              Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: 
               <select onchange="updatePaymentStatus('${s.id}', this.value)">${paymentOptions}</select>
-              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.peeTime}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}'
+              ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${r.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
             </li>
           `;
         });
-        alert('Service history rendered successfully');
+        alert('Service history rendered');
       } catch (e) {
         alert('Error rendering service history');
         console.error('History render error:', e);
@@ -1444,11 +1463,11 @@
       try {
         alert('Rendering walker dashboard...');
         const data = getData();
-        const schedulesListEl = document.getElementById('walker-list-schedules');
-        const availableServicesListEl = document.getElementById('walker-services-services');
-        const reportSelectEl = document.getElementById('walker-report-id-schedule');
-        const profileDisplayElEl = document.getElementById('walker-display-profile');
-        if (!schedulesListEl || !availableServicesListEl || !reportSelectEl || !profileDisplayElEl) {
+        const schedulesListEl = document.getElementById('walker-schedules');
+        const availableServicesListEl = document.getElementById('walker-available-services');
+        const reportSelectEl = document.getElementById('walker-report-schedule');
+        const profileDisplayEl = document.getElementById('walker-profile-display');
+        if (!schedulesListEl || !availableServicesListEl || !reportSelectEl || !profileDisplayEl) {
           alert('Walker dashboard elements missing');
           return;
         }
@@ -1456,8 +1475,8 @@
         availableServicesListEl.innerHTML = '';
         reportSelectEl.innerHTML = '<option value="">Select Schedule</option>';
 
-        const schedulesList = data.schedules.filter(s => s.walkerId === currentUser.id);
-        schedulesList.forEach(s => {
+        const schedules = data.schedules.filter(s => s.walkerId === currentUser.id);
+        schedules.forEach(s => {
           let scheduleButtons = '';
           if (s.status !== 'completed') {
             scheduleButtons = `
@@ -1468,7 +1487,7 @@
           }
           schedulesListEl.innerHTML += `
             <li class="flex-between">
-              <span>Pet: ${s.pet}, Schedule: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
+              <span>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}</span>
               <div>${scheduleButtons}</div>
             </li>
           `;
@@ -1477,11 +1496,11 @@
           }
         });
 
-        const availableSchedulesList = data.schedules.filter(s => !s.idwalkerId && s.idstatus === 'pending');
-        availableSchedulesList.forEach(s => {
-          availableServicesList.innerHTML += `
+        const availableSchedules = data.schedules.filter(s => !s.walkerId && s.status === 'pending');
+        availableSchedules.forEach(s => {
+          availableServicesListEl.innerHTML += `
             <li class="flex-between">
-              <span>Service:/installer ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
+              <span>Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Client: ${data.users.find(u => u.id === s.clientId)?.firstName || 'Website'}</span>
               <button class="btn btn-blue" onclick="acceptService('${s.id}')">Accept</button>
             </li>
           `;
@@ -1497,7 +1516,7 @@
         const streetNumberEl = document.getElementById('walker-street-number');
         const streetAddressEl = document.getElementById('walker-street-address');
         const addressLine2El = document.getElementById('walker-address-line2');
-        const cityEl = document.getElementById('walker-address-line2');
+        const cityEl = document.getElementById('walker-city');
         const stateEl = document.getElementById('walker-state');
         const zipEl = document.getElementById('walker-zip');
         const contactTextEl = document.getElementById('walker-contact-text');
@@ -1507,7 +1526,7 @@
         if (lastNameEl) lastNameEl.value = currentUser.lastName;
         if (streetNumberEl) streetNumberEl.value = currentUser.address.streetNumber;
         if (streetAddressEl) streetAddressEl.value = currentUser.address.streetAddress;
-        if (addressLine2El) addressLine2El.value = currentUser.addressLine2.address;
+        if (addressLine2El) addressLine2El.value = currentUser.address.addressLine2;
         if (cityEl) cityEl.value = currentUser.address.city;
         if (stateEl) stateEl.value = currentUser.address.state;
         if (zipEl) zipEl.value = currentUser.address.zip;
@@ -1515,15 +1534,15 @@
         if (contactEmailEl) contactEmailEl.checked = currentUser.preferredContact.email;
         if (contactVoiceEl) contactVoiceEl.checked = currentUser.preferredContact.voice;
 
-        const serviceHistoryEl = document.getElementById('walker-service-history');
+        const historyListEl = document.getElementById('walker-service-history');
         if (historyListEl) {
           historyListEl.innerHTML = '';
-          schedules.filter(s => {
-            const reportList = data.reports.find(r => r.scheduleId === s.id);
+          schedules.forEach(s => {
+            const report = data.reports.find(r => r.scheduleId === s.id);
             historyListEl.innerHTML += `
               <li>
                 Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-                ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.peeTime}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}`
+                ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
               </li>
             `;
           });
@@ -1541,7 +1560,7 @@
         });
 
         renderCalendars();
-        alert('Walker dashboard rendered successfully');
+        alert('Walker dashboard rendered');
       } catch (e) {
         alert('Error rendering walker dashboard');
         console.error('Walker render error:', e);
@@ -1553,16 +1572,16 @@
         alert('Rendering client dashboard...');
         const data = getData();
         const clientSchedulesEl = document.getElementById('client-schedules');
-        const profileDisplayEl = document.getElementById('client-display-profile');
+        const profileDisplayEl = document.getElementById('client-profile-display');
         if (!clientSchedulesEl || !profileDisplayEl) {
           alert('Client dashboard elements missing');
           return;
         }
         clientSchedulesEl.innerHTML = '';
 
-        const clientSchedules = data.schedules.filter(s => s.clientId === currentUser.id);
-        clientSchedules.forEach(schedule => {
-          clientSchedulesEl.innerHTML += `<li>${schedule.pet}, Service: ${s.serviceType}, Schedule: ${s.date}, Status: ${s.time}, Payment: ${s.paymentStatus}</li>`;
+        const schedules = data.schedules.filter(s => s.clientId === currentUser.id);
+        schedules.forEach(s => {
+          clientSchedulesEl.innerHTML += `<li>Pet: ${s.pet}, Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}</li>`;
         });
 
         profileDisplayEl.innerHTML = `
@@ -1585,23 +1604,23 @@
         if (lastNameEl) lastNameEl.value = currentUser.lastName;
         if (streetNumberEl) streetNumberEl.value = currentUser.address.streetNumber;
         if (streetAddressEl) streetAddressEl.value = currentUser.address.streetAddress;
-        if (addressLine2El) addressLine2El.value = currentUser.addressLine2.address;
+        if (addressLine2El) addressLine2El.value = currentUser.address.addressLine2;
         if (cityEl) cityEl.value = currentUser.address.city;
         if (stateEl) stateEl.value = currentUser.address.state;
         if (zipEl) zipEl.value = currentUser.address.zip;
-        if (contactTextEl) contactText.checked = currentUser.preferredContact.text;
-        if (contactEmailEl) contactEmailEl.checked = currentUser.emailContact.email;
-        if (contactVoiceEl) contactVoiceEl.checked = currentUser.preferredVoiceContact.voice;
+        if (contactTextEl) contactTextEl.checked = currentUser.preferredContact.text;
+        if (contactEmailEl) contactEmailEl.checked = currentUser.preferredContact.email;
+        if (contactVoiceEl) contactVoiceEl.checked = currentUser.preferredContact.voice;
 
-        const serviceHistoryEl = document.getElementById('client-service-history');
+        const historyEl = document.getElementById('client-service-history');
         if (historyEl) {
           historyEl.innerHTML = '';
           schedules.forEach(s => {
-            const reportList = data.reports.find(r => r.id === s.id);
+            const report = data.reports.find(r => r.scheduleId === s.id);
             historyEl.innerHTML += `
               <li>
-                Service: ${s.serviceType}, Schedule: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
-                ${report ? `<br>Start time: ${report.startTime}, End time: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.peeTime}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}`
+                Service: ${s.serviceType}, Date: ${s.date}, Time: ${s.time}, Status: ${s.status}, Payment: ${s.paymentStatus}
+                ${report ? `<br>Start: ${report.startTime}, End: ${report.endTime}, Poop: ${report.poop}, Pee: ${report.pee}, Notes: ${report.notes}, GPS: ${report.gpsStart} to ${report.gpsEnd}` : ''}
               </li>
             `;
           });
@@ -1611,9 +1630,7 @@
         tabs.forEach(tab => {
           tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('#client .tab-content').forEach(c => {
-              c.classList.add('hidden');
-            });
+            document.querySelectorAll('#client .tab-content').forEach(c => c.classList.add('hidden'));
             tab.classList.add('active');
             const tabContentEl = document.getElementById(tab.dataset.tab);
             if (tabContentEl) tabContentEl.classList.remove('hidden');
@@ -1621,44 +1638,6 @@
         });
 
         renderCalendars();
-        alert('Client dashboard rendered successfully');
+        alert('Client dashboard rendered');
       } catch (e) {
-        alert('Error rendering client dashboard');
-        console.error('Client render error:', e);
-      }
-    }
-
-    function handleCheckInOut(scheduleId, action, gpsId) {
-      try {
-        alert(`Processing ${action}...`);
-        const data = getData();
-        const timestamp = new Date().toISOString();
-        data.checkIns.push({
-          id: `check${data.checkIns.length + 1}`,
-          scheduleId,
-          action,
-          gps,
-          timestamp,
-        });
-        const schedule = data.schedules.find(s => s.id === scheduleId);
-        if (schedule) {
-          schedule.status = action === 'check-in' ? 'in-progress' : 'completed';
-        }
-        saveData(data);
-        alert('Check-in/out processed successfully');
-        renderWalker();
-      } catch (e) {
-        alert('Error processing check-in/out');
-        console.error('Check-in error:', e);
-      }
-    }
-
-    // Initialize data events
-    initializeData();
-  </script>
-</body>
-</html>
-```
-
-### Why This Should Resolve the Error
--
+        alert('
